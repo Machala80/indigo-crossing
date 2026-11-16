@@ -461,3 +461,7 @@ a.ppf > *:hover, .ppf a:hover{border-color:var(--am)}
 .gate .check{font-size:.88rem;line-height:1.5}
 .gate .check a{color:var(--gold-text)}
 .sitefoot p + p{margin-top:8px}
+
+.hdr-right{display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hdr-out{font-family:var(--f-ui);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--crack);background:transparent;border:1px solid rgb(245 216 122 / .5);border-radius:999px;padding:6px 12px;cursor:pointer}
+.hdr-out:hover{background:rgb(245 216 122 / .12)}

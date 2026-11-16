@@ -1233,5 +1233,6 @@ window.addEventListener('hashchange', () => { confirmDel = null; render(); windo
 
 setStatus();
 render();
+{ const so = document.querySelector('.hdr-out'); if (so) so.hidden = false; }
 return { flush };
 }
