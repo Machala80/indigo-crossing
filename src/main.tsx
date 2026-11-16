@@ -95,6 +95,11 @@ function SignIn() {
     e.preventDefault();
     if (!convexUrl) { setError("This app isn’t connected to its database yet (VITE_CONVEX_URL is missing)."); return; }
     const form = new FormData(e.currentTarget);
+    if (mode === "signUp" && !form.get("consent")) {
+      setError("Please tick the box to agree, so we can store your journal for you.");
+      return;
+    }
+    form.delete("consent");
     const em = String(form.get("email") || email).trim().toLowerCase();
     setEmail(em);
     setBusy(true); setError(""); setNote("");
@@ -156,7 +161,12 @@ function SignIn() {
                 <input type="password" id="newPassword" name="newPassword" autoComplete="new-password" required minLength={8} placeholder="At least 8 characters" /></div>
             </>
           ) : null}
-          {mode === "signUp" ? <p className="muted small">By creating an account you agree that Indigo Estate (Life and Soul Place Ltd) stores your journal so you can use the app. You can download or delete it at any time.</p> : null}
+          {mode === "signUp" ? (
+            <label className="check" htmlFor="consent">
+              <input type="checkbox" id="consent" name="consent" />
+              <span>I&rsquo;m 18 or over, and I agree that Indigo Estate (Life and Soul Place Ltd) stores what I write, which may include personal details about my health, beliefs and family, so I can use the app. I can download or delete it at any time. <a href="/privacy.html" target="_blank" rel="noopener">Privacy notice</a></span>
+            </label>
+          ) : null}
           {error ? <p className="err" role="alert">{error}</p> : null}
           <button className="btn gold" type="submit" disabled={busy}>{busy ? "One moment…" : button}</button>
         </form>

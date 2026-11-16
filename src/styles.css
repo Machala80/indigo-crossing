@@ -457,3 +457,7 @@ a.ppf > *:hover, .ppf a:hover{border-color:var(--am)}
   .ppf{grid-template-columns:1fr}
   .tabs a{letter-spacing:.06em}
 }
+
+.gate .check{font-size:.88rem;line-height:1.5}
+.gate .check a{color:var(--gold-text)}
+.sitefoot p + p{margin-top:8px}
