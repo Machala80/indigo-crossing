@@ -14,6 +14,7 @@ startCrossing({
   setReminder: async (email, slot) => { const r = { email, slot, on: true }; window.__reminder = r; localStorage.setItem("harness-rem", JSON.stringify(r)); },
   stopReminder: async () => { window.__reminder = null; localStorage.removeItem("harness-rem"); },
   mirrorPattern: async () => ({ seen: "You go quiet when being seen feels risky.", questions: ["Q1?", "Q2?", "Q3?"], truth: "Finished is braver than perfect.", practice: "Send one piece daily." }),
+  mirrorYear: async () => ({ step: "Write 500 words of chapter one", why: "Small enough to finish on a tired week." }),
   mirrorWeek: async () => ({ theme: "Saying no", held: "Mornings", watch: "Evenings", question: "What helps?" }),
   deleteAccount: async () => { window.__deleted = true; },
   signOut: async () => { window.__signedOut = true; },

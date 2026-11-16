@@ -50,6 +50,7 @@ async function callClaude(prompt: string): Promise<Record<string, unknown>> {
 async function gate(ctx: any) {
   const userId = await getAuthUserId(ctx);
   if (!userId) throw new ConvexError("Please sign in again.");
+  if (!process.env.ANTHROPIC_API_KEY) throw new ConvexError("The Mirror isn't switched on yet.");
   const ok = await ctx.runMutation(internal.mirror.useOne, { userId, day: londonNow().dateKey });
   if (!ok) throw new ConvexError(`You've used today's ${DAILY_LIMIT} Mirror reflections. They refresh tomorrow.`);
 }
@@ -106,5 +107,31 @@ ${days.slice(0, 9000)}
 Reply with only JSON: {"theme":"the thread running through the week","held":"where they held and what helped","watch":"a pattern in timing or triggers worth watching","question":"one question to carry into next week"}`;
     const r = await callClaude(prompt);
     return { theme: String(r.theme ?? ""), held: String(r.held ?? ""), watch: String(r.watch ?? ""), question: String(r.question ?? "") };
+  },
+});
+
+/** Suggest next week's step for the member's Sovereign Year. */
+export const year = action({
+  args: {
+    goal: v.string(), identity: v.string(), why: v.string(), season: v.string(),
+    milestone: v.string(), week: v.string(), recent: v.string(),
+  },
+  handler: async (ctx, a) => {
+    await gate(ctx);
+    const prompt = `You are the Mirror, a steady coach inside The Crossing from Indigo Estate. The person is working through their Sovereign Year: one goal built over 52 weeks, one small step each week. ${RULES}
+
+Their goal for the year: ${clip(a.goal, 200)}
+Who they are becoming: I am someone who ${clip(a.identity, 200)}
+Why it matters: ${clip(a.why, 400)}
+Current season: ${clip(a.season, 30)}, aiming for this milestone: ${clip(a.milestone, 200)}
+They are planning week ${clip(a.week, 4)} of 52.
+Recent weeks:
+${clip(a.recent, 1200)}
+
+Suggest ONE next step that can be finished within seven days, moves them toward the season's milestone, and accounts for what got in the way recently (make it smaller if they've been struggling). Write the step as a short instruction under 20 words, starting with a verb.
+
+Reply with only JSON: {"step":"the step","why":"one sentence on why this step, under 30 words"}`;
+    const r = await callClaude(prompt);
+    return { step: String(r.step ?? "").slice(0, 200), why: String(r.why ?? "").slice(0, 300) };
   },
 });

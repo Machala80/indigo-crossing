@@ -49,6 +49,8 @@ function Running() {
           stopReminder: () => client.mutation(api.reminders.stop, {}),
           mirrorPattern: (p: Record<string, string>) => client.action(api.mirror.pattern, { p }),
           mirrorWeek: (patterns: string, days: string) => client.action(api.mirror.week, { patterns, days }),
+          mirrorYear: (a: { goal: string; identity: string; why: string; season: string; milestone: string; week: string; recent: string }) =>
+            client.action(api.mirror.year, a),
           deleteAccount: async () => {
             await client.mutation(api.journal.deleteAccount, { confirm: "DELETE" });
             await signOut().catch(() => {});

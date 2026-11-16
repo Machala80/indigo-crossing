@@ -39,7 +39,7 @@ const RANKS = [
   {n:'Sovereign',m:500,  line:'You govern yourself. The pattern no longer rules.'},
   {n:'Architect',m:1000, line:'You build freedom, for yourself and for others.'}
 ];
-const EARN = [['Pledge',1],['Held day',3],['Noticed',2],['Urge ridden out',5],['Honest slip log',1],['Evening examen',2],['Belief questioned',8],['Daily dare',5],['Trial quest',10],['Trial complete',30]];
+const EARN = [['Pledge',1],['Held day',3],['Noticed',2],['Urge ridden out',5],['Honest slip log',1],['Evening examen',2],['Belief questioned',8],['Daily dare',5],['Trial quest',10],['Trial complete',30],['Weekly step done',10],['Sunday review',5],['Season milestone',20]];
 const TRIAL = [
   {t:'Say it aloud',          d:'Tell your witness the name of the pattern you are walking out of.', auto:null},
   {t:'Catch it once',         d:'Check in as Held or Noticed on any pattern.', auto:'check'},
@@ -139,7 +139,7 @@ const emb = (id, cls) => `<svg class="emb${cls?' '+cls:''}" aria-hidden="true"><
 const dayIndex = () => Math.floor(fromKey(todayKey()).getTime() / 86400000);
 
 /* ---------- State & saving ---------- */
-function blank(){ return {v:3, patterns:[], checks:{}, slips:{}, intentions:{}, pledges:{}, examens:{}, urges:[], dares:{}, quest:{start:null, done:{}, complete:null, trials:0}, rankSeen:null, witness:{name:'',next:'',stake:'',rhythm:'weekly'}}; }
+function blank(){ return {v:3, patterns:[], checks:{}, slips:{}, intentions:{}, pledges:{}, examens:{}, urges:[], dares:{}, quest:{start:null, done:{}, complete:null, trials:0}, rankSeen:null, year:null, yearsCompleted:0, witness:{name:'',next:'',stake:'',rhythm:'weekly'}}; }
 function normalise(s){
   const b = blank();
   if (!s || typeof s !== 'object') return b;
@@ -149,6 +149,7 @@ function normalise(s){
   b.witness = Object.assign({name:'',next:'',stake:'',rhythm:'weekly'}, typeof b.witness === 'object' ? b.witness : {});
   b.quest = Object.assign({start:null, done:{}, complete:null, trials:0}, typeof b.quest === 'object' ? b.quest : {});
   b.patterns.forEach(p => { if (!Array.isArray(p.inquiries)) p.inquiries = []; });
+  if (b.year && typeof b.year === 'object'){ b.year.weeks = b.year.weeks || {}; b.year.milestones = b.year.milestones || {}; b.year.seasons = Array.isArray(b.year.seasons) ? b.year.seasons : ['','','','']; } else b.year = null;
   b.v = 3;
   return b;
 }
@@ -226,6 +227,8 @@ function manna(){
   t += Object.keys(state.pledges).length;
   t += 5 * Object.keys(state.dares).length;
   t += 10 * Object.keys(state.quest.done||{}).length + 30 * (state.quest.trials||0);
+  if (state.year){ for (const k in state.year.weeks){ const w = state.year.weeks[k]; t += w.done==='yes'?10 : w.done==='partly'?4 : 0; if (w.review) t += 5; } t += 20 * Object.keys(state.year.milestones||{}).length; }
+  t += 100 * (state.yearsCompleted||0);
   return t;
 }
 function rankOf(m){ let i = 0; RANKS.forEach((r, j) => { if (m >= r.m) i = j; }); return i; }
@@ -301,7 +304,7 @@ function jar(frac){
 }
 
 /* ---------- Views ---------- */
-const VIEWS = ['today','quest','patterns','trace','journey','witness','question'];
+const VIEWS = ['today','quest','patterns','trace','future','yearsetup','journey','witness','question'];
 const view = () => { const h = location.hash.slice(1); return VIEWS.includes(h) ? h : 'today'; };
 
 let expanded = null, confirmDel = null, mirrorBusy = {}, mirrorErr = {};
@@ -637,6 +640,11 @@ function renderJourney(){
 
   return `<section class="stack-lg">
     <div class="stack-sm"><p class="eyebrow">Journey</p><h2>From the narrow place to the promised land</h2></div>
+    ${!ex ? `<div class="ppf">
+      <a href="#patterns"><svg class="emb" aria-hidden="true"><use href="#e-narrow"/></svg><b>Past</b><span>${realPatterns().length} pattern${realPatterns().length===1?'':'s'} traced to the root</span></a>
+      <a href="#today"><svg class="emb" aria-hidden="true"><use href="#e-tent"/></svg><b>Present</b><span>${list.reduce((a,p)=>a+stats(p).held,0)} days held</span></a>
+      <a href="#future" class="now"><svg class="emb" aria-hidden="true"><use href="#e-sunrise"/></svg><b>Future</b><span>${state.year ? `Week ${yearWeek()} of 52: ${esc(state.year.goal)}` : 'Your Sovereign Year is waiting'}</span></a>
+    </div>` : ''}
     ${ex?'<p class="muted small"><span class="chip example">Example</span> These figures show the example pattern until you trace your own.</p>':''}
     <div class="pathbox">${svg}</div>
     <div class="stats">
@@ -678,6 +686,153 @@ function renderJourney(){
   </section>`;
 }
 
+/* ---------- Future: the Sovereign Year ---------- */
+/* Past is traced, present is held, future is built: one goal, 52 weekly steps, four seasons. */
+const SEASONS = [
+  {name:'Seedtime', from:1,  to:13, emb:'sprout', line:'Plant the first seeds. Small, steady, every week.'},
+  {name:'Rain',     from:14, to:26, emb:'waters', line:'Keep watering through the dry weeks. This is where most people stop.'},
+  {name:'Harvest',  from:27, to:39, emb:'palm',   line:'Gather what is growing, and let it be seen.'},
+  {name:'Sabbath',  from:40, to:52, emb:'lamp',   line:'Finish well, rest, and give thanks for the year.'}
+];
+const YSTEPS = [
+  {title:'Who you are becoming', q:'Who are you becoming this year?', hint:'Carry forward an “I am someone who…” from a pattern you’ve traced, or write a new one. The whole year is built for this person.'},
+  {title:'One goal', q:'What is the one thing you will build in the next 52 weeks?', hint:'One goal, not five. Make it something you’ll clearly know you’ve done: “Publish my book”, not “write more”.'},
+  {title:'Why it matters', q:'Why does this matter, and what are you walking out of to get there?', hint:'The future grows from the past. Link it to a pattern you’re leaving behind, if one fits.'},
+  {title:'Four seasons', q:'What will be true at the end of each season?', hint:'A milestone every 13 weeks. Rough is fine; you can change these later.'},
+  {title:'Week one', q:'Write a letter from your future self, and choose this week’s first step.', hint:'Your future self has already done it. What do they want you to know? Then name one step small enough to finish in the next seven days.'}
+];
+const yearWeek = () => { const y = state.year; if (!y) return 0; const days = Math.floor((fromKey(todayKey()) - fromKey(y.start)) / 86400000); return Math.min(52, Math.max(1, Math.floor(days / 7) + 1)); };
+const seasonOf = w => SEASONS.findIndex(s => w >= s.from && w <= s.to);
+const weekRec = n => (state.year.weeks[n] || (state.year.weeks[n] = {}));
+const weekStart = n => addDays(fromKey(state.year.start), (n - 1) * 7);
+const isSunday = () => new Date().getDay() === 0;
+function yearDone(){ return state.year ? Object.values(state.year.weeks).filter(w => w.done === 'yes').length : 0; }
+
+let ydraft = null, ystep = 0, yErr = '', yearBusy = false, yearMirrorErr = '', yearMirror = null, reviewOpen = false, yearEndArmed = false, blockedPrompt = null;
+
+function blankYear(){ return {identity:'', goal:'', why:'', fromPattern:'', seasons:['','','',''], letter:'', firstStep:''}; }
+
+function ring52(done, current){
+  let s = '';
+  for (let i = 0; i < 52; i++){
+    const a = (i/52) * Math.PI*2 - Math.PI/2, r1 = 25, on = i < done, here = i === current - 1;
+    const r2 = on ? 33 : here ? 34 : 31;
+    s += `<line class="tk${on?' on':''}${here?' here':''}" x1="${(38+Math.cos(a)*r1).toFixed(2)}" y1="${(38+Math.sin(a)*r1).toFixed(2)}" x2="${(38+Math.cos(a)*r2).toFixed(2)}" y2="${(38+Math.sin(a)*r2).toFixed(2)}"/>`;
+  }
+  return `<svg class="ring ring52" viewBox="0 0 76 76" role="img" aria-label="Week ${current} of 52">${s}<text x="38" y="44" text-anchor="middle">${current}</text></svg>`;
+}
+
+function renderYearSetup(){
+  if (!ydraft) ydraft = blankYear();
+  const d = ydraft, S = YSTEPS[ystep];
+  let prog = ''; for (let i = 0; i < YSTEPS.length; i++) prog += `<span class="${i<ystep?'done':i===ystep?'here':''}"></span>`;
+  const ids = [...new Set(realPatterns().map(p => (p.identity||'').trim()).filter(Boolean))];
+  let body = '';
+  if (ystep === 0) body = `${ids.length ? `<div class="row">${ids.map(t => `<button type="button" class="pick" data-act="yPickId" data-v="${esc(t)}">I am someone who ${esc(t)}</button>`).join('')}</div>` : ''}
+    <div><label class="lbl" for="y-identity">I am someone who</label><input type="text" id="y-identity" data-bind="ydraft" data-k="identity" placeholder="e.g. finishes what I start" value="${esc(d.identity)}"></div>`;
+  if (ystep === 1) body = `<div><label class="lbl" for="y-goal">My goal for the next 52 weeks</label><input type="text" id="y-goal" data-bind="ydraft" data-k="goal" placeholder="e.g. Publish my first book" value="${esc(d.goal)}"></div>`;
+  if (ystep === 2) body = `<div><label class="lbl" for="y-why">Why it matters</label><textarea id="y-why" data-bind="ydraft" data-k="why" placeholder="Who benefits? What changes when it’s done?">${esc(d.why)}</textarea></div>
+    ${realPatterns().length ? `<div><span class="lbl">It grows from walking out of</span><div class="row">${realPatterns().map(p => `<button type="button" class="pick${d.fromPattern===p.id?' on':''}" data-act="yPickPattern" data-v="${esc(p.id)}" aria-pressed="${d.fromPattern===p.id}">${esc(p.name)}</button>`).join('')}</div></div>` : ''}`;
+  if (ystep === 3) body = SEASONS.map((s, i) => `<div><label class="lbl" for="y-s${i}">${s.name} · by week ${s.to}</label><input type="text" id="y-s${i}" data-bind="yseason" data-i="${i}" placeholder="${['e.g. First three chapters drafted','e.g. Full first draft finished','e.g. Edited and cover designed','e.g. Published and launched'][i]}" value="${esc(d.seasons[i])}"></div>`).join('');
+  if (ystep === 4) body = `<div><label class="lbl" for="y-letter">A letter from your future self (optional)</label><textarea id="y-letter" data-bind="ydraft" data-k="letter" placeholder="Dear me, a year ago today…">${esc(d.letter)}</textarea></div>
+    <div><label class="lbl" for="y-first">This week’s first step</label><input type="text" id="y-first" data-bind="ydraft" data-k="firstStep" placeholder="One thing you can finish in seven days" value="${esc(d.firstStep)}"></div>`;
+  const last = ystep === YSTEPS.length - 1;
+  return `<section class="stack-lg">
+    <div class="stack-sm"><p class="eyebrow">${state.year ? 'Editing your' : 'Begin your'} Sovereign Year · Step ${ystep+1} of ${YSTEPS.length} · ${S.title}</p><div class="progress" style="--n:${YSTEPS.length}">${prog}</div></div>
+    <div class="stack"><h2 class="q">${S.q}</h2><p class="hint">${S.hint}</p>${body}${yErr?`<p class="err" role="alert">${esc(yErr)}</p>`:''}</div>
+    <div class="step-nav">
+      ${ystep>0 ? `<button class="btn ghost" type="button" data-act="yBack">Back</button>` : `<button class="btn text" type="button" data-act="yCancel">Cancel</button>`}
+      ${last ? `<button class="btn gold" type="button" data-act="ySave">${state.year ? 'Save changes' : 'Begin my Sovereign Year'}</button>` : `<button class="btn" type="button" data-act="yNext">Next</button>`}
+    </div>
+  </section>`;
+}
+
+function renderFuture(){
+  const y = state.year;
+  if (!y){
+    return `<section class="stack-lg">
+      <div class="stack-sm"><p class="eyebrow">Future</p><h2>Build on the ground you’ve cleared</h2></div>
+      <div class="ppf">
+        <div><svg class="emb" aria-hidden="true"><use href="#e-narrow"/></svg><b>Past</b><span>Where it came from. You trace it.</span></div>
+        <div><svg class="emb" aria-hidden="true"><use href="#e-tent"/></svg><b>Present</b><span>What you do today. You hold it.</span></div>
+        <div class="now"><svg class="emb" aria-hidden="true"><use href="#e-sunrise"/></svg><b>Future</b><span>Who you are building. You plan it.</span></div>
+      </div>
+      <p>Walking out of a pattern leaves space. Your <b>Sovereign Year</b> fills it on purpose: one goal, built over 52 weeks, one small step a week, with a review every Sunday and four seasons to mark the way.</p>
+      <div class="row"><a class="btn gold" href="#yearsetup" data-act="yStart">Begin my Sovereign Year</a></div>
+      <p class="muted small">It takes about five minutes to set up. You can change everything later.</p>
+    </section>`;
+  }
+  const n = yearWeek(), si = Math.max(0, seasonOf(n)), S = SEASONS[si];
+  const cur = weekRec(n), done = yearDone();
+  if (yr.week !== n) yr = Object.assign({week:n, how:cur.done || ''}, clone(cur.review || {}), {next:(y.weeks[n+1]||{}).step || ''});
+  const finished = n === 52 && cur.review;
+  const blocked = realPatterns().filter(p => !p.released);
+  let grid = '';
+  for (let i = 1; i <= 52; i++){
+    const w = y.weeks[i] || {}; const cls = w.done === 'yes' ? 'held' : w.done === 'partly' ? 'noticed' : (w.done === 'no' || (i < n && !w.done)) ? 'slipped' : '';
+    grid += `<i class="${cls}${i===n?' today':''}${i%13===0?' edge':''}" title="Week ${i} · ${fmtShort(weekStart(i))}${w.step?': '+esc(w.step):''}"></i>`;
+  }
+  const rv = cur.review;
+  const review = rv && !reviewOpen ? `<div class="panel">
+      <div class="row">${emb('seal')}<p class="eyebrow">Week ${n} reviewed</p></div>
+      <p>${rv.how==='yes'?'You did this week’s step.':rv.how==='partly'?'You did part of this week’s step.':'This week’s step didn’t happen, and you told the truth about it.'}</p>
+      ${n < 52 ? `<p>Next week’s step: <b>${esc((y.weeks[n+1]||{}).step||'')}</b></p>` : ''}
+      <button class="btn text" type="button" data-act="yReviewOpen" style="align-self:flex-start">Edit this review</button>
+    </div>` : `<div class="panel${isSunday()?' sunday':''}">
+      <div class="row">${emb('lamp')}<div class="stack-sm" style="gap:2px"><p class="eyebrow">Sunday review · week ${n}</p><p class="muted small">${isSunday()?'It’s Sunday. Close the week and set the next step.':'Best done on Sunday evening, but any day is fine.'}</p></div></div>
+      <div><span class="lbl">How did this week’s step go?</span><div class="yn" role="group">${[['yes','Done'],['partly','Partly'],['no','Not this week']].map(([v,l]) => `<button type="button" class="choice" data-act="yHow" data-v="${v}" aria-pressed="${(yr.how||'')===v}">${l}</button>`).join('')}</div></div>
+      <div class="two"><div><label class="lbl" for="yr-helped">What helped</label><textarea id="yr-helped" data-bind="yr" data-k="helped" placeholder="People, times, habits that made it easier">${esc(yr.helped||'')}</textarea></div>
+      <div><label class="lbl" for="yr-blocked">What got in the way</label><textarea id="yr-blocked" data-bind="yr" data-k="blocked" placeholder="Be honest; this is where the patterns show up">${esc(yr.blocked||'')}</textarea></div></div>
+      ${blocked.length ? `<div><span class="lbl">Was it an old pattern?</span><div class="row">${blocked.map(p => `<button type="button" class="pick${yr.pid===p.id?' on':''}" data-act="yPid" data-v="${esc(p.id)}" aria-pressed="${yr.pid===p.id}">${esc(p.name)}</button>`).join('')}<button type="button" class="pick${yr.pid==='none'?' on':''}" data-act="yPid" data-v="none" aria-pressed="${yr.pid==='none'}">No, something else</button></div></div>` : ''}
+      ${n < 52 ? `<div><label class="lbl" for="yr-next">Next week’s step</label><input type="text" id="yr-next" data-bind="yr" data-k="next" placeholder="One thing you can finish in seven days" value="${esc(yr.next||'')}">
+        ${mirrorOn() ? `<button class="btn text" type="button" data-act="yMirror"${yearBusy?' disabled':''}>${yearBusy?'The Mirror is thinking…':'Ask the Mirror to suggest a step'}</button>` : ''}
+        ${yearMirror ? `<p class="small muted"><em>${esc(yearMirror.why||'')}</em></p>` : ''}${yearMirrorErr?`<p class="err">${esc(yearMirrorErr)}</p>`:''}</div>` : ''}
+      ${yErr?`<p class="err" role="alert">${esc(yErr)}</p>`:''}
+      <div><button class="btn gold" type="button" data-act="yReviewSave">Close the week</button></div>
+    </div>`;
+  return `<section class="stack-lg">
+    <div class="stack-sm"><p class="eyebrow">Future · your Sovereign Year</p><h2>${esc(y.goal)}</h2></div>
+    <div class="rank year">
+      <div class="ringwrap">${ring52(done, n)}<span class="ringcap" style="color:var(--sky-soft)">week of 52</span></div>
+      <div class="stack-sm">
+        <p class="eyebrow">${S.name} · weeks ${S.from}–${S.to}</p>
+        <p class="identity" style="color:var(--crack)">I am someone who ${esc(y.identity)}</p>
+        <p class="muted small">${done} of 52 weekly steps done · began ${fmtLong(fromKey(y.start))}</p>
+        ${y.fromPattern && realPatterns().find(p=>p.id===y.fromPattern) ? `<p class="muted small">Growing from walking out of: <b style="color:var(--sky-ink)">${esc(realPatterns().find(p=>p.id===y.fromPattern).name)}</b></p>` : ''}
+      </div>
+    </div>
+    ${finished ? `<div class="empty">${emb('crown')}<h3>Your Sovereign Year is complete.</h3><p class="muted">Read your letter again. Then, when you’re ready, begin the next one.</p><button class="btn gold" type="button" data-act="yNewYear">Begin a new year</button></div>` : `
+    <div class="dare">
+      <div class="row"><span class="emb-badge">${emb('sprout')}</span><div class="stack-sm" style="gap:2px"><p class="eyebrow">This week’s step · week ${n}</p><p class="muted small">${fmtShort(weekStart(n))} to ${fmtShort(addDays(weekStart(n),6))} · +10 manna when done</p></div></div>
+      ${cur.step ? `<p class="text">${esc(cur.step)}</p>` : `<div><label class="lbl" for="y-step">Set this week’s step</label><input type="text" id="y-step" data-bind="ystepnow" placeholder="One thing you can finish in seven days" value="${esc(stepNow)}"></div><div><button class="btn small" type="button" data-act="ySetStep">Set my step</button></div>`}
+      ${cur.step ? `<div class="row">${cur.done==='yes' ? '<span class="ok">Done. Well built.</span><button class="btn text" type="button" data-act="yStepUndo">Undo</button>'
+        : cur.done==='partly' ? '<span class="muted small">Partly done.</span><button class="btn gold small" type="button" data-act="yStepDone">I finished it</button>'
+        : '<button class="btn gold" type="button" data-act="yStepDone">I did it</button>'}</div>` : ''}
+    </div>`}
+    ${blockedPrompt ? `<p class="notice"><b>The past showed up in the present.</b> ${esc(blockedPrompt.name)} got in the way this week. <a href="#question" data-act="inqStart" data-id="${esc(blockedPrompt.id)}">Question the belief behind it</a>, or check in on it under Today.</p>` : ''}
+    ${review}
+    <div class="stack"><p class="eyebrow">Four seasons</p>
+      <div class="seasons">${SEASONS.map((s, i) => { const hit = (y.milestones||{})[i]; return `<div class="season${i===si?' now':''}${hit?' hit':''}">
+        <svg class="emb" aria-hidden="true"><use href="#e-${s.emb}"/></svg>
+        <b>${s.name}</b><span class="muted small">Weeks ${s.from}–${s.to}</span>
+        <p class="small">${esc(y.seasons[i] || 'No milestone set')}</p>
+        ${y.seasons[i] ? (hit ? `<span class="ok small">Reached ${fmtShort(fromKey(hit))}</span>` : `<button class="btn text small" type="button" data-act="yMilestone" data-i="${i}">Mark reached</button>`) : ''}
+      </div>`; }).join('')}</div>
+    </div>
+    <div class="stack"><p class="eyebrow">The 52 weeks</p>
+      <div class="legend"><span><i class="held"></i>Done</span><span><i class="noticed"></i>Partly</span><span><i class="slipped"></i>Missed</span><span><i></i>Ahead</span></div>
+      <div class="grid52" aria-label="Your 52 weeks">${grid}</div>
+    </div>
+    ${y.why ? `<div class="stack-sm"><p class="eyebrow">Why it matters</p><p>${esc(y.why)}</p></div>` : ''}
+    ${y.letter ? `<details class="letterbox"><summary>Read the letter from your future self</summary><p>${esc(y.letter).replace(/\n/g,'<br>')}</p></details>` : ''}
+    <div class="pat-actions">
+      <button class="btn ghost small" type="button" data-act="yEdit">Edit my year</button>
+      ${yearEndArmed ? `<span class="confirm">End this year and start again? Your weeks will be cleared.<button class="btn danger small" type="button" data-act="yEnd">End it</button><button class="btn text" type="button" data-act="yEndNo">Keep going</button></span>` : `<button class="btn text" type="button" data-act="yEndArm">End this year</button>`}
+    </div>
+  </section>`;
+}
+let yr = {}, stepNow = '';
+
 function weekSummary(){
   const ex = showingExample();
   const list = ex ? [EXAMPLE] : realPatterns().filter(p => !p.released);
@@ -704,6 +859,7 @@ function weekSummary(){
       for (const id in m){ const p = realPatterns().find(x => x.id === id); if (p && m[id] && m[id].trim()) slips.push(`  – ${fmtShort(d)} (${p.name}): ${m[id].trim()}`); } });
     if (slips.length) L.push('', 'Where I slipped, and what came just before:', ...slips);
     const q = state.quest; if (q.start && !q.complete) L.push('', `Seven Days Out trial: ${TRIAL.filter((t,i)=>q.done[i]).length} of 7 quests sealed.`);
+    if (state.year){ const n = yearWeek(), w = state.year.weeks[n] || {}; L.push('', `Sovereign Year: ${state.year.goal}. Week ${n} of 52 (${yearDone()} steps done).`, `  This week\u2019s step: ${w.step || 'not set yet'}${w.done==='yes' ? ' (done)' : ''}`); }
     L.push(`Rank: ${RANKS[rankOf(manna())].n} (${manna()} manna).`);
   }
   if ((state.witness.next||'').trim()) L.push('', `Next week I commit to: ${state.witness.next.trim()}`);
@@ -763,9 +919,9 @@ function renderWitness(){
 function render(){
   syncQuest();
   const v = view();
-  const tab = v === 'question' || v === 'trace' ? 'patterns' : v;
+  const tab = v === 'question' || v === 'trace' ? 'patterns' : v === 'yearsetup' ? 'future' : v;
   document.querySelectorAll('.tabs a').forEach(a => { if (a.dataset.v === tab) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
-  const fn = {today:renderToday, quest:renderQuest, patterns:renderPatterns, trace:renderTrace, journey:renderJourney, witness:renderWitness, question:renderQuestion}[v];
+  const fn = {today:renderToday, quest:renderQuest, patterns:renderPatterns, trace:renderTrace, journey:renderJourney, witness:renderWitness, question:renderQuestion, future:renderFuture, yearsetup:renderYearSetup}[v];
   $('#main').innerHTML = fn();
   checkRank();
 }
@@ -844,6 +1000,8 @@ function journalText(){
     if (p.released) L.push('Released on ' + p.releasedAt);
     L.push('');
   });
+  if (state.year){ const y = state.year; L.push('==== Sovereign Year ====', `Goal: ${y.goal}`, `I am someone who ${y.identity}`, `Began ${y.start} \u00b7 week ${yearWeek()} of 52`); if (y.why) L.push('Why: ' + y.why); y.seasons.forEach((m, i) => { if (m) L.push(`${SEASONS[i].name}: ${m}${(y.milestones||{})[i] ? ' (reached ' + y.milestones[i] + ')' : ''}`); }); if (y.letter) L.push('Letter from my future self: ' + y.letter);
+    Object.keys(y.weeks).map(Number).sort((a,b)=>a-b).forEach(i => { const w = y.weeks[i]; L.push(`Week ${i}: ${w.step||'-'}${w.done?' ['+w.done+']':''}`); if (w.review){ if (w.review.helped) L.push('  Helped: ' + w.review.helped); if (w.review.blocked) L.push('  In the way: ' + w.review.blocked); } }); L.push(''); }
   const keys = new Set([...Object.keys(state.examens), ...Object.keys(state.slips), ...Object.keys(state.intentions), ...state.urges.map(u=>u.date)]);
   [...keys].sort().forEach(k => {
     const part = [];
@@ -932,6 +1090,68 @@ const acts = {
   useTruth(b){ const p = realPatterns().find(x => x.id === b.dataset.id); if (p && p.mirror){ p.truth = p.mirror.truth; save(); render(); toast('Truth updated'); } },
   release(b){ const p = realPatterns().find(x => x.id === b.dataset.id); if (!p) return;
     p.released = true; p.releasedAt = todayKey(); save(); render(); showRelease(p); },
+  yStart(){ ydraft = blankYear(); const ids = realPatterns().map(p => (p.identity||'').trim()).filter(Boolean); if (ids.length) ydraft.identity = ids[0]; ystep = 0; yErr = ''; if (view() === 'yearsetup') render(); },
+  yPickId(b){ ydraft.identity = b.dataset.v; const i = $('#y-identity'); if (i) i.value = ydraft.identity; },
+  yPickPattern(b){ ydraft.fromPattern = ydraft.fromPattern === b.dataset.v ? '' : b.dataset.v; render(); },
+  yNext(){
+    yErr = '';
+    if (ystep === 0 && !ydraft.identity.trim()){ yErr = 'Finish the sentence: I am someone who…'; render(); return; }
+    if (ystep === 1 && !ydraft.goal.trim()){ yErr = 'Name your one goal for the year.'; render(); return; }
+    ystep = Math.min(YSTEPS.length - 1, ystep + 1); render(); window.scrollTo({top:0});
+  },
+  yBack(){ yErr = ''; ystep = Math.max(0, ystep - 1); render(); },
+  yCancel(){ ydraft = null; location.hash = 'future'; },
+  ySave(){
+    const d = ydraft; yErr = '';
+    if (!state.year && !d.firstStep.trim()){ yErr = 'Name one small step for this week.'; render(); return; }
+    if (state.year){
+      Object.assign(state.year, {identity:d.identity.trim(), goal:d.goal.trim(), why:d.why.trim(), fromPattern:d.fromPattern, seasons:d.seasons.map(s => s.trim()), letter:d.letter.trim()});
+      if (d.firstStep.trim()) weekRec(yearWeek()).step = d.firstStep.trim();
+      toast('Your year is updated');
+    } else {
+      state.year = {identity:d.identity.trim(), goal:d.goal.trim(), why:d.why.trim(), fromPattern:d.fromPattern, seasons:d.seasons.map(s => s.trim()), letter:d.letter.trim(), start:todayKey(), weeks:{1:{step:d.firstStep.trim()}}, milestones:{}};
+      queueSeal({kicker:'Week 1 of 52', name:'Your Sovereign Year', line:'The ground is cleared. Now you build, one small step a week.', emb:'sunrise'});
+    }
+    save(); ydraft = null; yr = {}; location.hash = 'future';
+  },
+  yEdit(){ const y = state.year; ydraft = {identity:y.identity, goal:y.goal, why:y.why, fromPattern:y.fromPattern||'', seasons:[...y.seasons], letter:y.letter, firstStep:''}; ystep = 0; yErr = ''; location.hash = 'yearsetup'; },
+  ySetStep(){ const s = stepNow.trim(); if (!s){ toast('Write one small step first.'); return; } weekRec(yearWeek()).step = s; stepNow = ''; save(); render(); },
+  yStepDone(){ weekRec(yearWeek()).done = 'yes'; save(); render(); toast('Step done. +10 manna'); },
+  yStepUndo(){ delete weekRec(yearWeek()).done; save(); render(); },
+  yHow(b){ yr.how = b.dataset.v; render(); },
+  yPid(b){ yr.pid = yr.pid === b.dataset.v ? '' : b.dataset.v; render(); },
+  yReviewOpen(){ reviewOpen = true; const n = yearWeek(); yr = Object.assign({week:n}, clone(weekRec(n).review || {}), {next:(state.year.weeks[n+1]||{}).step || ''}); render(); },
+  yReviewSave(){
+    const n = yearWeek(); yErr = '';
+    if (!yr.how){ yErr = 'Choose how this week’s step went.'; render(); return; }
+    if (n < 52 && !(yr.next||'').trim()){ yErr = 'Name next week’s step before closing the week.'; render(); return; }
+    const w = weekRec(n);
+    w.review = {how:yr.how, helped:(yr.helped||'').trim(), blocked:(yr.blocked||'').trim(), pid:yr.pid && yr.pid !== 'none' ? yr.pid : '', at:todayKey()};
+    w.done = yr.how;
+    if (n < 52){ const nx = weekRec(n + 1); nx.step = yr.next.trim(); }
+    blockedPrompt = w.review.pid ? realPatterns().find(p => p.id === w.review.pid) || null : null;
+    reviewOpen = false; yearMirror = null; save(); render();
+    toast(n < 52 ? `Week ${n} closed. Week ${n+1} is set. +5 manna` : 'Your final week is closed.');
+  },
+  async yMirror(){
+    if (!mirrorOn()) return;
+    const y = state.year, n = yearWeek(), si = Math.max(0, seasonOf(n));
+    yearBusy = true; yearMirrorErr = ''; render();
+    const recent = [];
+    for (let i = Math.max(1, n - 3); i <= n; i++){ const w = y.weeks[i]; if (!w) continue; recent.push(`Week ${i}: step "${w.step||'-'}", ${w.done||yr.how||'not reviewed'}${w.review&&w.review.blocked?`, blocked by: ${w.review.blocked}`:''}${i===n&&yr.blocked?`, blocked by: ${yr.blocked}`:''}`); }
+    try {
+      yearMirror = await api.mirrorYear({goal:y.goal, identity:y.identity, why:y.why||'', season:SEASONS[si].name, milestone:y.seasons[si]||'', week:String(n + 1), recent:recent.join('\n')});
+      if (yearMirror && yearMirror.step) yr.next = yearMirror.step;
+    } catch(e){ yearMirrorErr = errText(e, 'The Mirror couldn’t answer just now. Try again.'); }
+    yearBusy = false; render();
+  },
+  yMilestone(b){ const y = state.year; y.milestones = y.milestones || {}; const i = +b.dataset.i; y.milestones[i] = todayKey(); save(); render();
+    queueSeal({kicker:`${SEASONS[i].name} milestone`, name:y.seasons[i], line:'A season’s harvest, gathered. +20 manna', emb:SEASONS[i].emb}); },
+  yEndArm(){ yearEndArmed = true; render(); },
+  yEndNo(){ yearEndArmed = false; render(); },
+  yEnd(){ state.year = null; yearEndArmed = false; save(); render(); toast('Your year has been cleared.'); },
+  yNewYear(){ state.yearsCompleted = (state.yearsCompleted || 0) + 1; state.year = null; save(); location.hash = 'future'; },
+  buildOnThis(){ $('#release').hidden = true; location.hash = state.year ? 'future' : 'yearsetup'; if (!state.year) acts.yStart(); },
   closeRelease(){ $('#release').hidden = true; },
   closeSeal(){ nextSeal(); },
   delAsk(b){ confirmDel = b.dataset.id; render(); },
@@ -998,6 +1218,10 @@ document.addEventListener('input', e => {
   else if (bind === 'inqRange'){ inq.data[t.dataset.k] = +t.value; const o = $('#rv-' + t.dataset.k); if (o) o.textContent = t.value + '%'; }
   else if (bind === 'urge'){ urge.trigger = t.value; }
   else if (bind === 'remEmail'){ remDraft = t.value; }
+  else if (bind === 'ydraft'){ ydraft[t.dataset.k] = t.value; }
+  else if (bind === 'yseason'){ ydraft.seasons[+t.dataset.i] = t.value; }
+  else if (bind === 'yr'){ yr[t.dataset.k] = t.value; }
+  else if (bind === 'ystepnow'){ stepNow = t.value; }
   else if (bind === 'remConsent'){ remConsent = t.checked; }
   else if (bind === 'urgeRange'){ urge.intensity = +t.value; const o = $('#u-int'); if (o) o.textContent = t.value; }
   else if (bind === 'wName' || bind === 'wNext' || bind === 'wStake'){ state.witness[{wName:'name',wNext:'next',wStake:'stake'}[bind]] = t.value; save(); const s = $('#summary'); if (s) s.textContent = weekSummary(); }

@@ -111,10 +111,16 @@ describe("the Mirror", () => {
     expect(await t.query(api.mirror.enabled, {})).toBe(false);
     const a = await member(t, "a@example.com");
     await expect(a.as.action(api.mirror.pattern, { p: { name: "x" } })).rejects.toThrow(/switched on/);
-    for (let i = 0; i < 11; i++) expect(await t.mutation(internal.mirror.useOne, { userId: a.userId, day: "2026-11-15" })).toBe(true);
-    expect(await t.mutation(internal.mirror.useOne, { userId: a.userId, day: "2026-11-15" })).toBe(false);
-    expect(await t.mutation(internal.mirror.useOne, { userId: a.userId, day: "2026-11-16" })).toBe(true);
+    // A refused call (Mirror switched off) must not use up the daily allowance.
+    const today = londonNow().dateKey;
+    for (let i = 0; i < 12; i++) expect(await t.mutation(internal.mirror.useOne, { userId: a.userId, day: today })).toBe(true);
+    expect(await t.mutation(internal.mirror.useOne, { userId: a.userId, day: today })).toBe(false);
+    expect(await t.mutation(internal.mirror.useOne, { userId: a.userId, day: "2099-01-01" })).toBe(true);
     await expect(t.action(api.mirror.pattern, { p: { name: "x" } })).rejects.toThrow(/sign in/);
+    const yearArgs = { goal: "Publish my book", identity: "finishes", why: "", season: "Seedtime", milestone: "", week: "2", recent: "" };
+    await expect(t.action(api.mirror.year, yearArgs)).rejects.toThrow(/sign in/);
+    const b = await member(t, "b@example.com");
+    await expect(b.as.action(api.mirror.year, yearArgs)).rejects.toThrow(/switched on/);
   });
 });
 

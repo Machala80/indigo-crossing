@@ -419,3 +419,41 @@ footer a{color:var(--gold-text)}
 .splash{display:flex;flex-direction:column;align-items:center;gap:12px;padding:56px 16px;color:var(--ink-soft);font-family:var(--f-ui);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
 .splash .emb{width:40px;height:40px;animation:pulse 1.8s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.35}}
+
+/* ---------- Future: Sovereign Year ---------- */
+.ppf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ppf > *{display:flex;flex-direction:column;gap:4px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface);text-decoration:none;color:var(--ink-body);min-width:0}
+.ppf b{font-family:var(--f-display);font-weight:500;letter-spacing:.06em;color:var(--ink)}
+.ppf span{font-size:.85rem;color:var(--ink-soft);overflow-wrap:anywhere}
+.ppf .emb{width:26px;height:26px}
+.ppf .now{border-color:var(--gold);background:linear-gradient(135deg, var(--gold-soft), var(--surface))}
+a.ppf > *:hover, .ppf a:hover{border-color:var(--am)}
+.rank.year{grid-template-columns:auto minmax(0,1fr)}
+.ring52 .tk.here{stroke:#F5D87A;stroke-width:3}
+.rank .ring text{fill:#F4EEFA}
+.rank .ring .tk{stroke:rgb(255 255 255 / .18)}
+.seasons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.season{display:flex;flex-direction:column;gap:4px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface);min-width:0}
+.season b{font-family:var(--f-display);font-weight:500;color:var(--ink);letter-spacing:.04em}
+.season p{overflow-wrap:anywhere}
+.season .emb{width:24px;height:24px}
+.season.now{border-color:var(--am);box-shadow:0 0 0 3px var(--am-soft)}
+.season.hit{border-color:var(--gold);background:linear-gradient(160deg, var(--gold-soft), var(--surface))}
+.season .btn.text{align-self:flex-start;padding:4px 0}
+.grid52{display:grid;grid-template-columns:repeat(13, minmax(0,1fr));gap:5px;max-width:30rem}
+.grid52 i{aspect-ratio:1;border-radius:4px;border:1px solid var(--line);display:block}
+.grid52 i.held{background:var(--gold-grad);border-color:#C9A96E}
+.grid52 i.noticed{background:var(--am-soft);border-color:var(--am)}
+.grid52 i.slipped{background:var(--slip-soft);border-color:var(--slip)}
+.grid52 i.today{outline:1.5px solid var(--ink);outline-offset:1px}
+.letterbox{border:1px solid var(--line);border-radius:16px;padding:14px 18px;background:var(--surface-2)}
+.letterbox summary{cursor:pointer;font-family:var(--f-ui);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-text)}
+.letterbox p{margin-top:12px;font-style:italic}
+.panel.sunday{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+.pick.on{border-color:var(--am);background:var(--am-soft);color:var(--am-text)}
+.notice a{color:inherit;font-weight:600}
+@media (max-width:520px){
+  .seasons{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ppf{grid-template-columns:1fr}
+  .tabs a{letter-spacing:.06em}
+}

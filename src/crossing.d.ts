@@ -8,6 +8,7 @@ export interface CrossingApi {
   stopReminder(): Promise<unknown>;
   mirrorPattern(p: Record<string, string>): Promise<unknown>;
   mirrorWeek(patterns: string, days: string): Promise<unknown>;
+  mirrorYear(a: { goal: string; identity: string; why: string; season: string; milestone: string; week: string; recent: string }): Promise<unknown>;
   deleteAccount(): Promise<void>;
   signOut(): Promise<void>;
 }
