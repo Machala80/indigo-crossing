@@ -14,6 +14,7 @@ startCrossing({
   getPlus: async () => JSON.parse(localStorage.getItem("harness-plus") || '{"plus":false}'),
   checkout: async (plan) => { (window as any).__checkout = plan; return "#welcome-plus"; },
   portal: async () => "#plus",
+  confirmCheckout: async () => false,
   adminStats: async () => ({ members: 12, joined7: 3, joined30: 9, active7: 7, checkingIn7: 5, checkins7: 31, patterns: 14, released: 2, years: 4, remindersMorning: 6, remindersEvening: 2, plusActive: 3, plusCancelling: 1, mirror30: 40 }),
   save: async (data) => { window.__saves++; window.__lastSave = data; localStorage.setItem(KEY, data); },
   setReminder: async (email, slot) => { const r = { email, slot, on: true }; window.__reminder = r; localStorage.setItem("harness-rem", JSON.stringify(r)); },

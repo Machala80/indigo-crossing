@@ -221,3 +221,23 @@ describe("Sunday review email", () => {
     expect(await t.action(internal.reminders.sunday, { force: true })).toEqual({ sent: 0 });
   });
 });
+
+import { vi } from "vitest";
+describe("checkout safety net", () => {
+  test("switches Plus on from a completed checkout, only for the member who paid", async () => {
+    process.env.STRIPE_SECRET_KEY = "rk_test_x";
+    const t = convexTest(schema, modules);
+    const a = await member(t, "a@example.com");
+    const b = await member(t, "b@example.com");
+    const session = (owner: string) => ({ id: "cs_test_1", mode: "subscription", status: "complete", customer: "cus_9", client_reference_id: owner,
+      subscription: { id: "sub_9", status: "active", cancel_at_period_end: false, items: { data: [{ price: { id: "price_m" }, current_period_end: 1900000000 }] } } });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(session(a.userId)), { status: 200 })));
+    expect(await b.as.action(api.billing.confirm, { sessionId: "cs_test_1" })).toBe(false);
+    expect((await b.as.query(api.billing.status, {}))!.plus).toBe(false);
+    expect(await a.as.action(api.billing.confirm, { sessionId: "cs_test_1" })).toBe(true);
+    expect((await a.as.query(api.billing.status, {}))!).toMatchObject({ plus: true, periodEnd: 1900000000000 });
+    expect(await a.as.action(api.billing.confirm, { sessionId: "not-a-session" })).toBe(false);
+    vi.unstubAllGlobals();
+    delete process.env.STRIPE_SECRET_KEY;
+  });
+});

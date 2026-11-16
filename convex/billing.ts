@@ -66,10 +66,36 @@ export const checkout = action({
       "subscription_data[metadata][userId]": userId,
       allow_promotion_codes: true,
       ...(me.customerId ? { customer: me.customerId } : { customer_email: me.email ?? undefined }),
-      success_url: `${appUrl}/#welcome-plus`,
+      success_url: `${appUrl}/?cs={CHECKOUT_SESSION_ID}#welcome-plus`,
       cancel_url: `${appUrl}/#plus`,
     });
     return session.url as string;
+  },
+});
+
+/**
+ * Safety net: when a member lands back from Stripe, check the checkout directly,
+ * so Plus switches on even if Stripe's webhook is slow or misses.
+ */
+export const confirm = action({
+  args: { sessionId: v.string() },
+  handler: async (ctx, { sessionId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new ConvexError("Please sign in again.");
+    if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return false;
+    const s = await stripe(`checkout/sessions/${sessionId}?expand[]=subscription`);
+    if (s.client_reference_id !== userId || s.mode !== "subscription" || s.status !== "complete" || !s.customer) return false;
+    const sub = typeof s.subscription === "object" && s.subscription ? s.subscription : null;
+    const item = sub?.items?.data?.[0];
+    const end = sub ? (sub.current_period_end ?? item?.current_period_end) : undefined;
+    await ctx.runMutation(internal.billing.upsert, {
+      userId, customerId: String(s.customer),
+      subscriptionId: sub ? String(sub.id) : (s.subscription ? String(s.subscription) : undefined),
+      status: sub ? String(sub.status) : "active",
+      priceId: item?.price?.id, currentPeriodEnd: end ? end * 1000 : undefined,
+      cancelAtPeriodEnd: sub ? !!sub.cancel_at_period_end : undefined,
+    });
+    return true;
   },
 });
 

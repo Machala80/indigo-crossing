@@ -890,7 +890,13 @@ function renderPlus(){
   </section>`;
 }
 
+let confirmTried = false;
 function renderWelcomePlus(){
+  const cs = new URLSearchParams(location.search).get('cs');
+  if (cs && !confirmTried && !isPlus()){
+    confirmTried = true;
+    api.confirmCheckout(cs).then(async () => { try { plusInfo = await api.getPlus() || plusInfo; } catch(e){} history.replaceState(null, '', location.pathname + location.hash); if (view() === 'welcome-plus') render(); }).catch(() => {});
+  }
   if (isPlus()) return `<section class="empty">${emb('crown')}<p class="eyebrow">Welcome to Plus</p><h3>Everything is unlocked.</h3><p class="muted">Begin your Sovereign Year, question a belief, or trace another pattern.</p><div class="row" style="justify-content:center"><a class="btn gold" href="#future">Go to the Future</a><a class="btn ghost" href="#patterns">My patterns</a></div></section>`;
   if (welcomeTries < 15){
     welcomeTries++;

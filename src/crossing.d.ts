@@ -7,6 +7,7 @@ export interface CrossingApi {
   getPlus(): Promise<CrossingApi["plusInfo"]>;
   checkout(plan: "monthly" | "yearly"): Promise<string>;
   portal(): Promise<string>;
+  confirmCheckout(sessionId: string): Promise<boolean>;
   adminStats(): Promise<unknown>;
   save(data: string): Promise<unknown>;
   setReminder(email: string, slot: "morning" | "evening", consent: string): Promise<unknown>;

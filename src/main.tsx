@@ -48,6 +48,7 @@ function Running() {
           getPlus: () => client.query(api.billing.status, {}),
           checkout: (plan: "monthly" | "yearly") => client.action(api.billing.checkout, { plan }),
           portal: () => client.action(api.billing.portal, {}),
+          confirmCheckout: (sessionId: string) => client.action(api.billing.confirm, { sessionId }),
           adminStats: () => client.query(api.admin.stats, {}),
           save: (data: string) => client.mutation(api.journal.save, { data }),
           setReminder: (email: string, slot: "morning" | "evening", consent: string) =>
