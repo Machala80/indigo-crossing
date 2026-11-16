@@ -31,10 +31,11 @@ function Running() {
     started.current = true;
     (async () => {
       try {
-        const [journal, reminder, mirrorEnabled] = await Promise.all([
+        const [journal, reminder, mirrorEnabled, plusInfo] = await Promise.all([
           client.query(api.journal.get, {}),
           client.query(api.reminders.mine, {}),
           client.query(api.mirror.enabled, {}),
+          client.query(api.billing.status, {}),
         ]);
         document.getElementById("appShell")!.hidden = false;
         const leave = () => window.location.replace(window.location.pathname);
@@ -43,6 +44,11 @@ function Running() {
           email: journal?.email ?? "",
           reminder,
           mirrorEnabled,
+          plusInfo,
+          getPlus: () => client.query(api.billing.status, {}),
+          checkout: (plan: "monthly" | "yearly") => client.action(api.billing.checkout, { plan }),
+          portal: () => client.action(api.billing.portal, {}),
+          adminStats: () => client.query(api.admin.stats, {}),
           save: (data: string) => client.mutation(api.journal.save, { data }),
           setReminder: (email: string, slot: "morning" | "evening", consent: string) =>
             client.mutation(api.reminders.set, { email, slot, consent }),

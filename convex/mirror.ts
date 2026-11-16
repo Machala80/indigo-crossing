@@ -1,13 +1,19 @@
-import { action, internalMutation, query } from "./_generated/server";
+import { action, internalMutation, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { londonNow } from "./londonTime";
+import { plusStatus } from "./plus";
 
 const DAILY_LIMIT = Number(process.env.MIRROR_DAILY_LIMIT || 12);
 
 /** Whether the Mirror is switched on (an Anthropic key is set). */
 export const enabled = query({ args: {}, handler: async () => Boolean(process.env.ANTHROPIC_API_KEY) });
+
+export const hasPlus = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => (await plusStatus(ctx, userId)).plus,
+});
 
 export const useOne = internalMutation({
   args: { userId: v.id("users"), day: v.string() },
@@ -51,6 +57,8 @@ async function gate(ctx: any) {
   const userId = await getAuthUserId(ctx);
   if (!userId) throw new ConvexError("Please sign in again.");
   if (!process.env.ANTHROPIC_API_KEY) throw new ConvexError("The Mirror isn't switched on yet.");
+  const plus = await ctx.runQuery(internal.mirror.hasPlus, { userId });
+  if (!plus) throw new ConvexError("The Mirror is part of Crossing Plus.");
   const ok = await ctx.runMutation(internal.mirror.useOne, { userId, day: londonNow().dateKey });
   if (!ok) throw new ConvexError(`You've used today's ${DAILY_LIMIT} Mirror reflections. They refresh tomorrow.`);
 }

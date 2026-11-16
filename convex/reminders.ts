@@ -131,3 +131,71 @@ export const unsubscribe = httpAction(async (ctx, req) => {
   const ok = await ctx.runMutation(internal.reminders.unsubscribeByToken, { token: t });
   return page(ok ? "Reminders stopped" : "Already stopped", ok ? "You won’t get any more reminder emails. Your journal is untouched." : "There are no reminders set up for this link.");
 });
+
+/* ---------- Sunday "close your week" email for members with a Sovereign Year ---------- */
+
+export const sundayDue = internalQuery({
+  args: { dateKey: v.string() },
+  handler: async (ctx, { dateKey }) => {
+    const out: { id: any; email: string; token: string; week: number; goal: string }[] = [];
+    for (const slot of ["morning", "evening"] as const) {
+      const rows = await ctx.db.query("reminders").withIndex("by_slot_on", (q) => q.eq("slot", slot).eq("on", true)).collect();
+      for (const r of rows) {
+        if (r.lastSundaySent === dateKey) continue;
+        const j = await ctx.db.query("journals").withIndex("by_user", (q) => q.eq("userId", r.userId)).unique();
+        if (!j) continue;
+        try {
+          const y = JSON.parse(j.data).year;
+          if (!y || !y.start || !y.goal) continue;
+          const [yy, mm, dd] = String(y.start).split("-").map(Number);
+          const [ty, tm, td] = dateKey.split("-").map(Number);
+          const days = Math.floor((Date.UTC(ty, tm - 1, td) - Date.UTC(yy, mm - 1, dd)) / 86400000);
+          const week = Math.min(52, Math.max(1, Math.floor(days / 7) + 1));
+          out.push({ id: r._id, email: r.email, token: r.token, week, goal: String(y.goal).slice(0, 120) });
+        } catch { /* skip */ }
+      }
+    }
+    return out;
+  },
+});
+
+export const markSunday = internalMutation({
+  args: { id: v.id("reminders"), dateKey: v.string() },
+  handler: async (ctx, { id, dateKey }) => {
+    if (await ctx.db.get(id)) await ctx.db.patch(id, { lastSundaySent: dateKey });
+  },
+});
+
+/** Runs every 30 minutes; sends at 18:00 UK time on Sundays. */
+export const sunday = internalAction({
+  args: { force: v.optional(v.boolean()) },
+  handler: async (ctx, { force }) => {
+    const t = londonNow();
+    if (!force && !(t.weekday === 0 && t.hour === 18 && t.minute < 30)) return { sent: 0 };
+    const list = await ctx.runQuery(internal.reminders.sundayDue, { dateKey: t.dateKey });
+    const appUrl = process.env.APP_URL || "https://crossing.indigoestate.co.uk";
+    const siteUrl = process.env.CONVEX_SITE_URL;
+    let sent = 0;
+    for (const r of list) {
+      const unsub = `${siteUrl}/unsubscribe?t=${r.token}`;
+      const subject = `Close week ${r.week} of your Sovereign Year`;
+      const lines = [
+        `It’s Sunday evening. Week ${r.week} of 52 is closing.`,
+        `Take five minutes: how did this week’s step go, what helped, what got in the way? Then set next week’s step towards “${r.goal}”.`,
+        "One honest review a week is how a year gets built.",
+      ];
+      try {
+        await sendBrevo({
+          to: r.email, subject,
+          text: `${lines.join("\n\n")}\n\nClose your week: ${appUrl}/#future\n\nStop these emails: ${unsub}`,
+          html: emailHtml(subject, lines, { label: "Close my week", url: `${appUrl}/#future` },
+            `You asked Indigo Estate for reminders from The Crossing. <a href="${unsub}" style="color:#8B6914">Stop these emails</a>.`),
+          headers: { "List-Unsubscribe": `<${unsub}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
+        });
+        await ctx.runMutation(internal.reminders.markSunday, { id: r.id, dateKey: t.dateKey });
+        sent++;
+      } catch (e) { console.error(`Sunday email to ${r.email} failed: ${(e as Error).message}`); }
+    }
+    return { sent };
+  },
+});

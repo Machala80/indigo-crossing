@@ -18,6 +18,7 @@ export function londonNow(nowMs: number = Date.now()) {
     day: local.getUTCDate(),
     hour: local.getUTCHours(),
     minute: local.getUTCMinutes(),
+    weekday: local.getUTCDay(), // 0 = Sunday
     dateKey: `${local.getUTCFullYear()}-${String(local.getUTCMonth() + 1).padStart(2, "0")}-${String(local.getUTCDate()).padStart(2, "0")}`,
     bst,
   };

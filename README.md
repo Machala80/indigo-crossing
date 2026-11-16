@@ -50,12 +50,34 @@ In the [Convex dashboard](https://dashboard.convex.dev), open **indigo-crossing 
    | `BREVO_SENDER_NAME` | `Indigo Estate` |
    | `ANTHROPIC_API_KEY` | *(optional)* turns on the Mirror |
    | `MIRROR_DAILY_LIMIT` | *(optional)* reflections per member per day, default `12` |
+   | `ADMIN_EMAILS` | your email(s), comma-separated: gives you Plus and the owner dashboard |
+   | `STRIPE_SECRET_KEY` | Stripe → Developers → API keys (a restricted key is fine, see below) |
+   | `STRIPE_PRICE_MONTHLY` | the `price_…` ID of the £4.99 monthly price |
+   | `STRIPE_PRICE_YEARLY` | the `price_…` ID of the £39 yearly price |
+   | `STRIPE_WEBHOOK_SECRET` | the `whsec_…` signing secret from the webhook below |
 
 2. Create the production sign-in keys from your computer:
    ```bash
    npx @convex-dev/auth --prod
    ```
 3. **Settings → Deploy Keys → Generate Production Deploy Key.** Copy it; you need it in step 3.
+
+### 2b. Crossing Plus payments (Stripe)
+
+1. **Product catalogue → Add product** `Crossing Plus` with two recurring prices: £4.99 monthly and £39 yearly. Copy both `price_…` IDs into Convex.
+2. **Developers → API keys → Create restricted key** named `The Crossing`, with **Write** on *Checkout Sessions*, *Customer portal* and *Customers*, and **Read** on *Subscriptions* and *Prices*. Put it in Convex as `STRIPE_SECRET_KEY`.
+3. **Developers → Webhooks → Add endpoint**:
+   - URL: `https://<your-deployment>.convex.site/stripe-webhook` (Convex shows the `.convex.site` address under Settings → URL & Deploy Key, "HTTP Actions URL")
+   - Events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
+   - Copy the signing secret (`whsec_…`) into Convex as `STRIPE_WEBHOOK_SECRET`.
+4. **Settings → Billing → Customer portal**: switch it on and allow cancelling and switching between the two prices. This is the "Manage or cancel my plan" page.
+5. **Indigo members get Plus free:** Product catalogue → Coupons → New: 100% off, duration *Forever*, with a promotion code such as `INDIGOMEMBER`. Share the code in the members' area.
+
+**Free vs Plus.** Free: one active pattern, Today, the pull is here, examen, Quest, Witness, reminders, download and delete. Plus: unlimited patterns, Question the belief, the Future (Sovereign Year) and the Mirror. The Mirror is also enforced on the server, as it costs money per use.
+
+**Owner dashboard:** signed in with an `ADMIN_EMAILS` address, go to Witness → Your account → Owner dashboard. It shows counts only, never journals or emails.
+
+**Emails the app sends:** password-reset codes, daily reminders (7:30am or 8pm UK time) and, for members with a Sovereign Year and reminders on, a Sunday 6pm "close your week" email.
 
 ### 3. Host it on Cloudflare Pages
 

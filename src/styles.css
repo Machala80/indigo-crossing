@@ -465,3 +465,16 @@ a.ppf > *:hover, .ppf a:hover{border-color:var(--am)}
 .hdr-right{display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap}
 .hdr-out{font-family:var(--f-ui);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--crack);background:transparent;border:1px solid rgb(245 216 122 / .5);border-radius:999px;padding:6px 12px;cursor:pointer}
 .hdr-out:hover{background:rgb(245 216 122 / .12)}
+
+/* ---------- Crossing Plus ---------- */
+.hdr-plus{font-family:var(--f-ui);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:#2A1846;background:var(--gold-grad);border-radius:999px;padding:7px 13px}
+.hdr-plus.on{background:transparent;color:var(--crack);border:1px solid rgb(245 216 122 / .5)}
+.plus-lock{border:1px solid var(--gold);border-radius:22px;padding:22px;background:linear-gradient(150deg, var(--gold-soft), var(--surface) 60%);display:flex;flex-direction:column;gap:12px}
+.plus-tag{align-self:flex-start;font-family:var(--f-ui);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A1846;background:var(--gold-grad);border-radius:999px;padding:5px 10px}
+.btn.plus-btn{background:transparent;color:var(--gold-text);border-color:var(--gold)}
+.plans{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.plan{border:1px solid var(--line);border-radius:20px;padding:20px;background:var(--surface);display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+.plan.best{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+.price{font-family:var(--f-display);font-size:2rem;color:var(--ink);line-height:1}
+.price span{font-family:var(--f-body);font-size:.95rem;color:var(--ink-soft)}
+@media (max-width:520px){ .plans{grid-template-columns:1fr} }

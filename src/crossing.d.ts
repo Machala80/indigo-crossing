@@ -3,6 +3,11 @@ export interface CrossingApi {
   email: string;
   reminder: { email: string; slot: "morning" | "evening"; on: boolean } | null;
   mirrorEnabled: boolean;
+  plusInfo: { plus: boolean; admin: boolean; status: string | null; periodEnd: number | null; cancelAtPeriodEnd: boolean; hasCustomer: boolean } | null;
+  getPlus(): Promise<CrossingApi["plusInfo"]>;
+  checkout(plan: "monthly" | "yearly"): Promise<string>;
+  portal(): Promise<string>;
+  adminStats(): Promise<unknown>;
   save(data: string): Promise<unknown>;
   setReminder(email: string, slot: "morning" | "evening", consent: string): Promise<unknown>;
   stopReminder(): Promise<unknown>;

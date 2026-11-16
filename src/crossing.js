@@ -304,7 +304,7 @@ function jar(frac){
 }
 
 /* ---------- Views ---------- */
-const VIEWS = ['today','quest','patterns','trace','future','yearsetup','journey','witness','question'];
+const VIEWS = ['today','quest','patterns','trace','future','yearsetup','journey','witness','question','plus','welcome-plus','owner'];
 const view = () => { const h = location.hash.slice(1); return VIEWS.includes(h) ? h : 'today'; };
 
 let expanded = null, confirmDel = null, mirrorBusy = {}, mirrorErr = {};
@@ -500,10 +500,10 @@ function renderPatterns(){
       <div class="pat-actions">
         <button class="btn ghost small" type="button" data-act="toggle" data-id="${esc(p.id)}" aria-expanded="${open}">${open?'Close the map':'Open the map'}</button>
         ${p.example ? `<a class="btn small" href="#trace" data-act="newTrace">Trace my own</a>` : `
-          ${p.belief && !p.released ? `<button class="btn small" type="button" data-act="inqStart" data-id="${esc(p.id)}">Question the belief</button>` : ''}
+          ${p.belief && !p.released ? (isPlus() ? `<button class="btn small" type="button" data-act="inqStart" data-id="${esc(p.id)}">Question the belief</button>` : plusLink('Question the belief')) : ''}
           ${s===4 ? `<button class="btn gold small" type="button" data-act="release" data-id="${esc(p.id)}">Release this pattern</button>` : ''}
           <button class="btn text" type="button" data-act="edit" data-id="${esc(p.id)}">Edit</button>
-          ${mirrorOn() && !p.released ? `<button class="btn text" type="button" data-act="mirror" data-id="${esc(p.id)}"${mirrorBusy[p.id]?' disabled':''}>Ask the Mirror</button>` : ''}
+          ${mirrorOn() && !p.released ? (isPlus() ? `<button class="btn text" type="button" data-act="mirror" data-id="${esc(p.id)}"${mirrorBusy[p.id]?' disabled':''}>Ask the Mirror</button>` : plusLink('Ask the Mirror')) : ''}
           ${confirmDel===p.id ? `<span class="confirm">Delete this pattern and its check-ins?<button class="btn danger small" type="button" data-act="delYes" data-id="${esc(p.id)}">Delete</button><button class="btn text" type="button" data-act="delNo">Keep it</button></span>`
             : `<button class="btn text" type="button" data-act="delAsk" data-id="${esc(p.id)}">Delete</button>`}`}
       </div>
@@ -512,6 +512,7 @@ function renderPatterns(){
   return `<section class="stack-lg">
     <div class="section-head"><div class="stack-sm"><p class="eyebrow">Your patterns</p><h2>Every pattern has a root</h2></div>
     <a class="btn gold" href="#trace" data-act="newTrace">Trace a pattern</a></div>
+    ${!isPlus() && !showingExample() ? `<p class="muted small">Free plan: one pattern at a time. <a href="#plus">Plus</a> lets you trace as many as you need.</p>` : ''}
     <p class="muted">Each map reads from the root to the fruit: where the pattern came from, the belief it planted, and what grows from it now. Below the gold line is the covenant replacing it. The waymarks follow the route out of Egypt.</p>
     <div class="stack">${h}</div>
   </section>`;
@@ -520,6 +521,7 @@ function renderPatterns(){
 function blankDraft(){ return {name:'',habit:'',trigger:'',belief:'',voice:'',rootType:'',rootStory:'',payoff:'',cost:'',identity:'',truth:'',practice:''}; }
 
 function renderTrace(){
+  if (!editingId && !isPlus() && activeCount() >= 1) return `<section class="stack-lg"><div class="stack-sm"><p class="eyebrow">Trace a pattern</p><h2>One pattern at a time on the free plan</h2></div>${plusLock('Walk out of more than one pattern', 'You\u2019re already walking out of one pattern. Release it, or upgrade to Plus to trace as many as you need.')}</section>`;
   if (!draft){ draft = blankDraft(); editingId = null; step = 0; }
   const S = STEPS[step];
   let prog = '';
@@ -557,6 +559,7 @@ function renderTrace(){
 }
 
 function renderQuestion(){
+  if (!isPlus()) return `<section class="stack-lg">${plusLock('Question the belief', 'Seven steps that loosen the belief beneath the pattern, with a before-and-after rating so you can see it shift.')}</section>`;
   const p = inq && realPatterns().find(x => x.id === inq.pid);
   if (!p) return `<section class="empty"><h3>Choose a belief to question.</h3><a class="btn" href="#patterns">Go to my patterns</a></section>`;
   const S = QSTEPS[inq.step], d = inq.data;
@@ -653,7 +656,7 @@ function renderJourney(){
       <div class="stat"><b>${list.filter(p=>p.released).length}</b><span>Released</span></div>
     </div>
     ${mirrorOn() && !ex ? `<div class="insight">
-      <div class="section-head"><p class="eyebrow">The Mirror reads your week</p><button class="btn ghost small" type="button" data-act="week"${weekBusy?' disabled':''}>${weekRead?'Read it again':'Read my week'}</button></div>
+      <div class="section-head"><p class="eyebrow">The Mirror reads your week</p>${isPlus() ? `<button class="btn ghost small" type="button" data-act="week"${weekBusy?' disabled':''}>${weekRead?'Read it again':'Read my week'}</button>` : plusLink('Read my week')}</div>
       ${weekBusy?'<p class="muted">Reading your week… this can take up to a minute.</p>':''}
       ${weekErr?`<p class="err">${esc(weekErr)}</p>`:''}
       ${weekRead && !weekBusy ? `<div class="mirror">
@@ -723,6 +726,7 @@ function ring52(done, current){
 }
 
 function renderYearSetup(){
+  if (!isPlus()) return renderFuture();
   if (!ydraft) ydraft = blankYear();
   const d = ydraft, S = YSTEPS[ystep];
   let prog = ''; for (let i = 0; i < YSTEPS.length; i++) prog += `<span class="${i<ystep?'done':i===ystep?'here':''}"></span>`;
@@ -749,6 +753,9 @@ function renderYearSetup(){
 
 function renderFuture(){
   const y = state.year;
+  if (!isPlus()) return `<section class="stack-lg"><div class="stack-sm"><p class="eyebrow">Future</p><h2>Build on the ground you\u2019ve cleared</h2></div>
+      <div class="ppf"><div><svg class="emb" aria-hidden="true"><use href="#e-narrow"/></svg><b>Past</b><span>Where it came from. You trace it.</span></div><div><svg class="emb" aria-hidden="true"><use href="#e-tent"/></svg><b>Present</b><span>What you do today. You hold it.</span></div><div class="now"><svg class="emb" aria-hidden="true"><use href="#e-sunrise"/></svg><b>Future</b><span>Who you are building. You plan it.</span></div></div>
+      ${plusLock('Your Sovereign Year', 'One goal, built over 52 weeks: a small step each week, a Sunday review, four seasons and the Mirror as your coach.')}${y ? '<p class="muted small">Your Sovereign Year is saved and will be waiting for you.</p>' : ''}</section>`;
   if (!y){
     return `<section class="stack-lg">
       <div class="stack-sm"><p class="eyebrow">Future</p><h2>Build on the ground you’ve cleared</h2></div>
@@ -833,6 +840,89 @@ function renderFuture(){
 }
 let yr = {}, stepNow = '';
 
+/* ---------- Crossing Plus ---------- */
+const PRICES = {monthly:'£4.99', yearly:'£39'};
+let plusInfo = api.plusInfo || {plus:false, admin:false};
+const isPlus = () => !!plusInfo.plus;
+let plusBusy = '', plusErr = '', welcomeTries = 0, adminStats = null, adminErr = '';
+const activeCount = () => realPatterns().filter(p => !p.released).length;
+const plusLink = (label) => `<a class="btn plus-btn small" href="#plus">${label} · Plus</a>`;
+function plusLock(title, line){
+  return `<div class="plus-lock">
+    <span class="plus-tag">Crossing Plus</span>
+    <h3>${title}</h3>
+    <p class="muted">${line}</p>
+    <div class="row"><a class="btn gold" href="#plus">See Plus</a><span class="muted small">From ${PRICES.monthly} a month. Free for Indigo Estate members.</span></div>
+  </div>`;
+}
+
+function renderPlus(){
+  const benefits = [
+    ['narrow','Unlimited patterns','Walk out of more than one narrow place at a time.'],
+    ['eye','Question the belief','The seven-step inquiry that loosens the belief beneath the pattern.'],
+    ['sunrise','The Future','Your Sovereign Year: one goal, 52 weekly steps, four seasons, Sunday reviews.'],
+    ['seal','The Mirror','AI reflections on your patterns, your week and your next step.']
+  ];
+  if (isPlus()){
+    const end = plusInfo.periodEnd ? fmtLong(new Date(plusInfo.periodEnd)) : '';
+    return `<section class="stack-lg">
+      <div class="stack-sm"><p class="eyebrow">Crossing Plus</p><h2>You have Crossing Plus</h2></div>
+      <div class="rank"><span class="emb-badge">${emb('crown')}</span><div class="stack-sm">
+        <p class="title">Plus</p>
+        <p class="muted small">${plusInfo.admin && !plusInfo.hasCustomer ? 'Included with your owner account.' : plusInfo.cancelAtPeriodEnd ? `Ends on ${end}. You keep everything until then.` : end ? `Renews on ${end}.` : 'Active.'}</p>
+      </div></div>
+      <ul class="gate-points">${benefits.map(([e,t,l]) => `<li>${emb(e)}<span><b>${t}.</b> ${l}</span></li>`).join('')}</ul>
+      ${plusInfo.hasCustomer ? `<div class="row"><button class="btn ghost" type="button" data-act="portal"${plusBusy?' disabled':''}>${plusBusy==='portal'?'Opening…':'Manage or cancel my plan'}</button></div>` : ''}
+      ${plusErr?`<p class="err" role="alert">${esc(plusErr)}</p>`:''}
+    </section>`;
+  }
+  return `<section class="stack-lg">
+    <div class="stack-sm"><p class="eyebrow">Crossing Plus</p><h2>Go deeper, and build what comes next</h2></div>
+    <p>The free Crossing gives you everything you need to walk out of one pattern, day by day. Plus adds the deeper work.</p>
+    <ul class="gate-points">${benefits.map(([e,t,l]) => `<li>${emb(e)}<span><b>${t}.</b> ${l}</span></li>`).join('')}</ul>
+    <div class="plans">
+      <div class="plan"><p class="eyebrow">Monthly</p><p class="price">${PRICES.monthly}<span> a month</span></p><button class="btn gold" type="button" data-act="checkout" data-plan="monthly"${plusBusy?' disabled':''}>${plusBusy==='monthly'?'Opening…':'Choose monthly'}</button></div>
+      <div class="plan best"><p class="eyebrow">Yearly · save 35%</p><p class="price">${PRICES.yearly}<span> a year</span></p><button class="btn gold" type="button" data-act="checkout" data-plan="yearly"${plusBusy?' disabled':''}>${plusBusy==='yearly'?'Opening…':'Choose yearly'}</button></div>
+    </div>
+    ${plusErr?`<p class="err" role="alert">${esc(plusErr)}</p>`:''}
+    <div class="panel"><p><b>Indigo Estate member?</b> Plus is included in your membership. Choose either plan, tap <b>Add promotion code</b> on the payment page, and enter the member code from your members’ area. You won’t be charged.</p></div>
+    <p class="muted small">Payments are handled securely by Stripe. Cancel any time from this page; you keep Plus until the end of the period you’ve paid for. Everything you’ve written stays yours either way.</p>
+  </section>`;
+}
+
+function renderWelcomePlus(){
+  if (isPlus()) return `<section class="empty">${emb('crown')}<p class="eyebrow">Welcome to Plus</p><h3>Everything is unlocked.</h3><p class="muted">Begin your Sovereign Year, question a belief, or trace another pattern.</p><div class="row" style="justify-content:center"><a class="btn gold" href="#future">Go to the Future</a><a class="btn ghost" href="#patterns">My patterns</a></div></section>`;
+  if (welcomeTries < 15){
+    welcomeTries++;
+    setTimeout(async () => { try { plusInfo = await api.getPlus() || plusInfo; } catch(e){} if (view() === 'welcome-plus') render(); }, 2000);
+    return `<section class="splash"><svg class="emb" aria-hidden="true"><use href="#e-seal"/></svg>Confirming your payment…</section>`;
+  }
+  return `<section class="empty"><h3>Your payment is still being confirmed.</h3><p class="muted">This can take a minute. Refresh the page shortly. If Plus still isn’t showing, email enquiries@indigoestate.co.uk and we’ll sort it.</p></section>`;
+}
+
+function renderOwner(){
+  if (!plusInfo.admin) return `<section class="empty"><h3>This page is for the owner only.</h3></section>`;
+  if (!adminStats && !adminErr){ api.adminStats().then(s => { adminStats = s; if (view()==='owner') render(); }).catch(() => { adminErr = 'Couldn’t load the figures. Refresh to try again.'; if (view()==='owner') render(); }); }
+  const s = adminStats;
+  const card = (n, l) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`;
+  return `<section class="stack-lg">
+    <div class="stack-sm"><p class="eyebrow">Owner dashboard</p><h2>How The Crossing is being used</h2></div>
+    <p class="muted small">Counts only. Members’ journals and email addresses are never shown here.</p>
+    ${adminErr?`<p class="err">${esc(adminErr)}</p>`:''}
+    ${!s ? '<p class="muted">Loading…</p>' : `
+    <p class="eyebrow">Members</p>
+    <div class="stats">${card(s.members,'Members in total')}${card(s.joined7,'Joined this week')}${card(s.joined30,'Joined in 30 days')}</div>
+    <p class="eyebrow">Activity, last 7 days</p>
+    <div class="stats">${card(s.active7,'Used the app')}${card(s.checkingIn7,'Checked in')}${card(s.checkins7,'Check-ins')}</div>
+    <p class="eyebrow">The work</p>
+    <div class="stats">${card(s.patterns,'Patterns traced')}${card(s.released,'Patterns released')}${card(s.years,'Sovereign Years')}</div>
+    <p class="eyebrow">Plus and reminders</p>
+    <div class="stats">${card(s.plusActive,'Plus members')}${card(s.plusCancelling,'Plus, cancelling')}${card(s.mirror30,'Mirror uses, 30 days')}</div>
+    <div class="stats">${card(s.remindersMorning,'Morning reminders')}${card(s.remindersEvening,'Evening reminders')}${card(s.remindersMorning + s.remindersEvening,'Reminders in total')}</div>
+    <button class="btn ghost small" type="button" data-act="ownerRefresh" style="align-self:flex-start">Refresh figures</button>`}
+  </section>`;
+}
+
 function weekSummary(){
   const ex = showingExample();
   const list = ex ? [EXAMPLE] : realPatterns().filter(p => !p.released);
@@ -889,7 +979,7 @@ function renderAccount(){
   return `<div class="panel">
     <p class="eyebrow">Your account</p>
     <p>Signed in as <b>${esc(api.email || '')}</b>. Your journal is private: it is stored in your own account, and nobody at Indigo Estate reads it.</p>
-    <div class="row"><button class="btn ghost small" type="button" data-act="export">Download my journal</button><button class="btn ghost small" type="button" data-act="signOut">Sign out</button></div>
+    <div class="row"><button class="btn ghost small" type="button" data-act="export">Download my journal</button><button class="btn ghost small" type="button" data-act="signOut">Sign out</button><a class="btn ghost small" href="#plus">${isPlus() ? 'My Plus plan' : 'Get Crossing Plus'}</a>${plusInfo.admin ? '<a class="btn ghost small" href="#owner">Owner dashboard</a>' : ''}</div>
     ${delArmed ? `<div class="confirm"><span>Delete your account, journal and reminders for good? This can’t be undone.</span><button class="btn danger small" type="button" data-act="delAccount"${delBusy?' disabled':''}>${delBusy?'Deleting…':'Delete everything'}</button><button class="btn text" type="button" data-act="delCancel">Keep my account</button></div>`
       : `<button class="btn text" type="button" data-act="delArm" style="align-self:flex-start">Delete my account</button>`}
   </div>`;
@@ -920,8 +1010,9 @@ function render(){
   syncQuest();
   const v = view();
   const tab = v === 'question' || v === 'trace' ? 'patterns' : v === 'yearsetup' ? 'future' : v;
+  const hp = document.querySelector('.hdr-plus'); if (hp){ hp.textContent = isPlus() ? 'Plus' : 'Get Plus'; hp.classList.toggle('on', isPlus()); }
   document.querySelectorAll('.tabs a').forEach(a => { if (a.dataset.v === tab) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
-  const fn = {today:renderToday, quest:renderQuest, patterns:renderPatterns, trace:renderTrace, journey:renderJourney, witness:renderWitness, question:renderQuestion, future:renderFuture, yearsetup:renderYearSetup}[v];
+  const fn = {today:renderToday, quest:renderQuest, patterns:renderPatterns, trace:renderTrace, journey:renderJourney, witness:renderWitness, question:renderQuestion, future:renderFuture, yearsetup:renderYearSetup, plus:renderPlus, 'welcome-plus':renderWelcomePlus, owner:renderOwner}[v];
   $('#main').innerHTML = fn();
   checkRank();
 }
@@ -1152,6 +1243,17 @@ const acts = {
   yEnd(){ state.year = null; yearEndArmed = false; save(); render(); toast('Your year has been cleared.'); },
   yNewYear(){ state.yearsCompleted = (state.yearsCompleted || 0) + 1; state.year = null; save(); location.hash = 'future'; },
   buildOnThis(){ $('#release').hidden = true; location.hash = state.year ? 'future' : 'yearsetup'; if (!state.year) acts.yStart(); },
+  async checkout(b){
+    plusBusy = b.dataset.plan; plusErr = ''; render();
+    try { const url = await api.checkout(b.dataset.plan); await flush(); window.location.href = url; }
+    catch(e){ plusBusy = ''; plusErr = errText(e, 'We couldn’t open the payment page. Try again in a moment.'); render(); }
+  },
+  async portal(){
+    plusBusy = 'portal'; plusErr = ''; render();
+    try { const url = await api.portal(); await flush(); window.location.href = url; }
+    catch(e){ plusBusy = ''; plusErr = errText(e, 'We couldn’t open your plan page. Try again in a moment.'); render(); }
+  },
+  ownerRefresh(){ adminStats = null; adminErr = ''; render(); },
   closeRelease(){ $('#release').hidden = true; },
   closeSeal(){ nextSeal(); },
   delAsk(b){ confirmDel = b.dataset.id; render(); },
@@ -1233,6 +1335,6 @@ window.addEventListener('hashchange', () => { confirmDel = null; render(); windo
 
 setStatus();
 render();
-{ const so = document.querySelector('.hdr-out'); if (so) so.hidden = false; }
+{ const so = document.querySelector('.hdr-out'); if (so) so.hidden = false; const hp = document.querySelector('.hdr-plus'); if (hp) hp.hidden = false; }
 return { flush };
 }

@@ -135,3 +135,89 @@ describe("UK clock", () => {
     expect(londonNow(Date.parse("2026-06-30T23:30:00Z")).dateKey).toBe("2026-07-01");
   });
 });
+
+import { verifyStripeSignature } from "./billing";
+
+async function signed(payload: string, secret: string, t = Math.floor(Date.now() / 1000)) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = Array.from(new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(`${t}.${payload}`))), (b) => b.toString(16).padStart(2, "0")).join("");
+  return `t=${t},v1=${sig}`;
+}
+
+describe("Crossing Plus and Stripe", () => {
+  test("signature check accepts real, rejects forged and stale", async () => {
+    const body = '{"a":1}';
+    expect(await verifyStripeSignature(body, await signed(body, "whsec_test"), "whsec_test")).toBe(true);
+    expect(await verifyStripeSignature(body, await signed(body, "wrong"), "whsec_test")).toBe(false);
+    expect(await verifyStripeSignature(body, await signed(body, "whsec_test", 1000), "whsec_test")).toBe(false);
+    expect(await verifyStripeSignature(body, null, "whsec_test")).toBe(false);
+  });
+
+  test("webhook turns Plus on and off", async () => {
+    process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
+    const t = convexTest(schema, modules);
+    const a = await member(t, "a@example.com");
+    expect((await a.as.query(api.billing.status, {}))!.plus).toBe(false);
+
+    const bad = await t.fetch("/stripe-webhook", { method: "POST", body: "{}", headers: { "stripe-signature": "t=1,v1=00" } });
+    expect(bad.status).toBe(400);
+
+    const done = JSON.stringify({ type: "checkout.session.completed", data: { object: { mode: "subscription", customer: "cus_1", subscription: "sub_1", client_reference_id: a.userId } } });
+    expect((await t.fetch("/stripe-webhook", { method: "POST", body: done, headers: { "stripe-signature": await signed(done, "whsec_test") } })).status).toBe(200);
+    expect((await a.as.query(api.billing.status, {}))!.plus).toBe(true);
+
+    const upd = JSON.stringify({ type: "customer.subscription.updated", data: { object: { id: "sub_1", customer: "cus_1", status: "active", cancel_at_period_end: true, items: { data: [{ price: { id: "price_m" }, current_period_end: 1900000000 }] } } } });
+    await t.fetch("/stripe-webhook", { method: "POST", body: upd, headers: { "stripe-signature": await signed(upd, "whsec_test") } });
+    const st = (await a.as.query(api.billing.status, {}))!;
+    expect(st).toMatchObject({ plus: true, cancelAtPeriodEnd: true, periodEnd: 1900000000000 });
+
+    const del = JSON.stringify({ type: "customer.subscription.deleted", data: { object: { id: "sub_1", customer: "cus_1", status: "canceled", items: { data: [] } } } });
+    await t.fetch("/stripe-webhook", { method: "POST", body: del, headers: { "stripe-signature": await signed(del, "whsec_test") } });
+    expect((await a.as.query(api.billing.status, {}))!.plus).toBe(false);
+  });
+
+  test("can't delete an account while still paying", async () => {
+    const t = convexTest(schema, modules);
+    const a = await member(t, "a@example.com");
+    await t.run(async (ctx) => ctx.db.insert("subscriptions", { userId: a.userId, stripeCustomerId: "cus_2", status: "active", updatedAt: 0 }));
+    await expect(a.as.mutation(api.journal.deleteAccount, { confirm: "DELETE" })).rejects.toThrow(/Cancel it first/);
+  });
+
+  test("owner gets Plus and counts; members get nothing from the dashboard", async () => {
+    process.env.ADMIN_EMAILS = "owner@example.com";
+    const t = convexTest(schema, modules);
+    const owner = await member(t, "owner@example.com");
+    const a = await member(t, "a@example.com");
+    await a.as.mutation(api.journal.save, { data: JSON.stringify({ patterns: [{ name: "secret", released: true }], checks: { "2099-01-01": { p: "held" } }, year: { goal: "x", start: "2026-11-16" } }) });
+    expect(await a.as.query(api.admin.stats, {})).toBeNull();
+    const s = (await owner.as.query(api.admin.stats, {}))!;
+    expect(s).toMatchObject({ members: 2, patterns: 1, released: 1, years: 1, checkins7: 1 });
+    expect(JSON.stringify(s)).not.toContain("secret");
+    expect((await owner.as.query(api.billing.status, {}))!.plus).toBe(true);
+    delete process.env.ADMIN_EMAILS;
+  });
+
+  test("the Mirror needs Plus once it's switched on", async () => {
+    process.env.ANTHROPIC_API_KEY = "test-key";
+    const t = convexTest(schema, modules);
+    const a = await member(t, "a@example.com");
+    expect(await t.query(api.mirror.enabled, {})).toBe(true);
+    await expect(a.as.action(api.mirror.pattern, { p: { name: "x" } })).rejects.toThrow(/part of Crossing Plus/);
+    delete process.env.ANTHROPIC_API_KEY;
+  });
+});
+
+describe("Sunday review email", () => {
+  test("goes once to members with a Sovereign Year and reminders on", async () => {
+    const t = convexTest(schema, modules);
+    const a = await member(t, "a@example.com");
+    const b = await member(t, "b@example.com");
+    await a.as.mutation(api.journal.save, { data: JSON.stringify({ year: { goal: "Publish my book", start: "2026-11-01" } }) });
+    await b.as.mutation(api.journal.save, { data: JSON.stringify({ patterns: [] }) });
+    await a.as.mutation(api.reminders.set, { email: "a@example.com", slot: "morning", consent: "I agree" });
+    await b.as.mutation(api.reminders.set, { email: "b@example.com", slot: "evening", consent: "I agree" });
+    expect(await t.action(internal.reminders.sunday, { force: true })).toEqual({ sent: 1 });
+    expect(await t.action(internal.reminders.sunday, { force: true })).toEqual({ sent: 0 });
+  });
+});

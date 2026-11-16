@@ -22,10 +22,25 @@ export default defineSchema({
     consent: v.string(),
     token: v.string(),
     lastSentDay: v.optional(v.string()),
+    lastSundaySent: v.optional(v.string()),
   })
     .index("by_user", ["userId"])
     .index("by_slot_on", ["slot", "on"])
     .index("by_token", ["token"]),
+
+  // Crossing Plus subscriptions, kept in step with Stripe by its webhook.
+  subscriptions: defineTable({
+    userId: v.id("users"),
+    stripeCustomerId: v.string(),
+    stripeSubscriptionId: v.optional(v.string()),
+    status: v.string(),
+    priceId: v.optional(v.string()),
+    currentPeriodEnd: v.optional(v.number()),
+    cancelAtPeriodEnd: v.optional(v.boolean()),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_customer", ["stripeCustomerId"]),
 
   // How many Mirror reflections each member used per day (cost control).
   mirrorUsage: defineTable({

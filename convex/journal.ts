@@ -40,6 +40,11 @@ export const deleteAccount = mutation({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new ConvexError("Please sign in again.");
+    const sub = await ctx.db.query("subscriptions").withIndex("by_user", (q) => q.eq("userId", userId)).first();
+    if (sub && ["active", "trialing", "past_due"].includes(sub.status) && !sub.cancelAtPeriodEnd) {
+      throw new ConvexError("You still have Crossing Plus. Cancel it first (Plus → Manage subscription), then delete your account, so you aren't charged again.");
+    }
+    if (sub) await ctx.db.delete(sub._id);
     for (const j of await ctx.db.query("journals").withIndex("by_user", (q) => q.eq("userId", userId)).collect()) await ctx.db.delete(j._id);
     for (const r of await ctx.db.query("reminders").withIndex("by_user", (q) => q.eq("userId", userId)).collect()) await ctx.db.delete(r._id);
     for (const m of await ctx.db.query("mirrorUsage").withIndex("by_user_day", (q) => q.eq("userId", userId)).collect()) await ctx.db.delete(m._id);
