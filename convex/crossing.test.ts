@@ -352,3 +352,10 @@ describe("Indigo Estate members list", () => {
     delete process.env.ADMIN_EMAILS;
   });
 });
+
+test("the admin list is read forgivingly", async () => {
+  const { adminEmails } = await import("./plus");
+  process.env.ADMIN_EMAILS = ' "Machala80@gmail.com" ;  michellef_909@hotmail.com\n';
+  expect(adminEmails()).toEqual(["machala80@gmail.com", "michellef_909@hotmail.com"]);
+  delete process.env.ADMIN_EMAILS;
+});

@@ -6,7 +6,11 @@ import type { Id } from "./_generated/dataModel";
 const PLUS_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 export function adminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  // Forgiving: commas, semicolons, spaces or new lines between addresses; stray quotes or <> ignored.
+  return (process.env.ADMIN_EMAILS || "")
+    .split(/[\s,;]+/)
+    .map((s) => s.replace(/["'<>]/g, "").trim().toLowerCase())
+    .filter((s) => s.includes("@"));
 }
 
 export async function isAdmin(ctx: QueryCtx | MutationCtx, userId: Id<"users">): Promise<boolean> {
