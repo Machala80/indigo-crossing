@@ -161,7 +161,7 @@ function SignIn() {
           ) : null}
           {mode !== "reset" ? (
             <div><label className="lbl" htmlFor="email">Email</label>
-              <input type="email" id="email" name="email" autoComplete="email" required defaultValue={email} placeholder="you@example.com" /></div>
+              <input type="email" id="email" name="email" autoComplete="username" required defaultValue={email} placeholder="you@example.com" /></div>
           ) : null}
           {mode === "signIn" || mode === "signUp" ? (
             <div><label className="lbl" htmlFor="password">Password</label>

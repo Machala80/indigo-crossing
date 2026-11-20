@@ -529,3 +529,6 @@ select:focus{outline:none;border-color:var(--am);box-shadow:0 0 0 3px var(--am-s
 .nudge{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;align-items:center;border:1px solid var(--gold);border-radius:16px;padding:14px 16px;background:linear-gradient(135deg, var(--gold-soft), var(--surface) 70%)}
 .nudge p{font-size:.95rem}
 .nudge .row{grid-column:2}
+
+/* iPhone home-screen app: make sure fields always take a tap and bring up the keyboard */
+input,textarea,select{-webkit-user-select:text;user-select:text;touch-action:manipulation}
