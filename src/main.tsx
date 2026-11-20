@@ -145,9 +145,9 @@ function SignIn() {
         <div className="gate-intro">
           <p className="eyebrow">An accountability practice from Indigo Estate</p>
           <ul className="gate-points">
-            <li><Emb id="narrow" /><span><b>Name the pattern</b> you keep repeating, and trace it to the belief and the voice beneath it.</span></li>
-            <li><Emb id="tent" /><span><b>Walk forty held days</b> through the wilderness, with daily check-ins, waymarks and a quest.</span></li>
-            <li><Emb id="crown" /><span><b>Release it.</b> Your journal is private to you; nobody at Indigo Estate reads it.</span></li>
+            <li><Emb id="narrow" /><span><b>Spot the pattern</b> you keep repeating, and find the belief behind it and where it came from.</span></li>
+            <li><Emb id="tent" /><span><b>Take it forty days at a time</b>, with quick daily check-ins, milestones and challenges to keep you going.</span></li>
+            <li><Emb id="crown" /><span><b>Break free.</b> Your journal is private to you; nobody at Indigo Estate reads it.</span></li>
           </ul>
         </div>
       ) : null}

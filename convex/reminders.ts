@@ -85,10 +85,10 @@ export const tick = internalAction({
     for (const r of list) {
       const unsub = `${siteUrl}/unsubscribe?t=${r.token}`;
       const morning = slot === "morning";
-      const subject = morning ? "Today you walk out" : "Close the day with the examen";
+      const subject = morning ? "Good morning: today’s check-in" : "How did today go?";
       const lines = morning
-        ? ["One day at a time. Open The Crossing, make your pledge, and check in on your pattern.", "If the pull comes today, tap “The pull is here”, and remember who you are becoming.", `Today’s dare: ${dare}`]
-        : ["Before you sleep, check in on your pattern and answer the four examen questions.", "Where did you walk free today? Where did the old pattern pull?", `Today’s dare was: ${dare}`];
+        ? ["One day at a time. Open The Crossing, make your promise for today, and check in on your pattern.", "If an urge comes today, tap “I’m feeling the urge”, and remember who you’re becoming.", `Today’s dare: ${dare}`]
+        : ["Before you sleep, check in on your pattern and answer the four evening reflection questions.", "Where did you do well today? Where did the old pattern tug at you?", `Today’s dare was: ${dare}`];
       try {
         await sendBrevo({
           to: r.email,
@@ -127,7 +127,7 @@ const page = (title: string, body: string) => new Response(
 
 export const unsubscribe = httpAction(async (ctx, req) => {
   const t = new URL(req.url).searchParams.get("t") || "";
-  if (!/^[0-9a-f]{36}$/.test(t)) return page("Link not recognised", "This unsubscribe link isn’t valid. You can stop reminders inside the app, on the Witness page.");
+  if (!/^[0-9a-f]{36}$/.test(t)) return page("Link not recognised", "This unsubscribe link isn’t valid. You can stop reminders inside the app, on the Partner page.");
   const ok = await ctx.runMutation(internal.reminders.unsubscribeByToken, { token: t });
   return page(ok ? "Reminders stopped" : "Already stopped", ok ? "You won’t get any more reminder emails. Your journal is untouched." : "There are no reminders set up for this link.");
 });

@@ -13,41 +13,41 @@ const ROOTS = {
   unknown:  {label:'Not yet known',      hint:'I can feel it but can’t place it yet'}
 };
 const STAGES = [
-  {name:'The Narrow Place', sub:'MITZRAYIM', emb:'narrow', desc:'Named, but not yet traced to its root.'},
-  {name:'Recognition',      sub:'SEEN',      emb:'eye',    desc:'Traced. You know what it is and where it came from.'},
-  {name:'Departure',        sub:'DAYS 1–6', emb:'gate', desc:'The first held days. Leaving is the hardest part.'},
-  {name:'Wilderness',       sub:'DAYS 7–39', emb:'tent', desc:'Old cravings return. Each held day rewires the path.'},
-  {name:'The Jordan',       sub:'DAY 40',    emb:'waters', desc:'Forty days held. Ready to be released.'},
-  {name:'Promised Land',    sub:'RELEASED',  emb:'crown',  desc:'Released. This pattern no longer runs you.'}
+  {name:'Named', sub:'STARTING', emb:'narrow', desc:'You’ve named it, but haven’t yet worked out where it comes from.'},
+  {name:'Understood', sub:'TRACED', emb:'eye', desc:'You know what it is and where it came from.'},
+  {name:'Breaking away', sub:'DAYS 1–6', emb:'gate', desc:'Your first days free. The start is the hardest part.'},
+  {name:'Keeping going', sub:'DAYS 7–39', emb:'tent', desc:'Old urges come back. Every day free makes the new way easier.'},
+  {name:'Nearly there', sub:'DAY 40', emb:'waters', desc:'Forty days free. Ready to let it go for good.'},
+  {name:'Free', sub:'RELEASED', emb:'crown', desc:'Let go. This pattern no longer runs your life.'}
 ];
 /* Waymarks follow the route of Exodus, in order */
 const STONES = [
-  {d:1,  name:'Out of Egypt', emb:'gate',   line:'The first step out of the narrow place.'},
-  {d:3,  name:'Marah',        emb:'tree',   line:'Three days in, the water tastes bitter. Keep walking: at Marah it was made sweet. (Exodus 15:22–25)'},
-  {d:7,  name:'Sabbath',      emb:'lamp',   line:'Seven days held. Rest in what you have done.'},
-  {d:12, name:'Elim',         emb:'palm',   line:'Twelve springs and seventy palms. A place to drink. (Exodus 15:27)'},
-  {d:21, name:'Manna',        emb:'manna',  line:'Enough for today, every day. Freedom is gathered one day at a time. (Exodus 16)'},
-  {d:30, name:'Sinai',        emb:'sinai',  line:'The covenant is written. You know who you are becoming. (Exodus 19–20)'},
-  {d:40, name:'Jordan',       emb:'waters', line:'Forty days held. The crossing is open. (Joshua 3)'}
+  {d:1,  name:'First step', emb:'gate', line:'Day one done. The first step is the biggest.'},
+  {d:3,  name:'The hard bit', emb:'tree', line:'Around day three it often feels harder before it feels easier. Keep going. (In Exodus, bitter water at Marah was made sweet.)'},
+  {d:7,  name:'One week', emb:'lamp', line:'Seven days free. Take a moment to be proud of that.'},
+  {d:12, name:'Breathing space', emb:'palm', line:'Twelve days. A good place to rest and refuel. (Like the oasis at Elim, Exodus 15:27.)'},
+  {d:21, name:'Three weeks', emb:'manna', line:'Enough for today, every day. Freedom is built one day at a time. (Exodus 16)'},
+  {d:30, name:'Thirty days', emb:'sinai', line:'The new way is taking hold. You know who you’re becoming. (Exodus 19–20)'},
+  {d:40, name:'Forty days', emb:'waters', line:'Forty days free. You’ve made the crossing. (Joshua 3)'}
 ];
 /* Ranks echo the Indigo Estate tiers */
 const RANKS = [
-  {n:'Initiate', m:0,    line:'You have stepped onto the road.'},
+  {n:'Initiate', m:0,    line:'You’ve started. That’s the bravest bit.'},
   {n:'Seeker',   m:40,   line:'You are asking the right questions.'},
-  {n:'Pilgrim',  m:120,  line:'You keep walking, even when it’s hard.'},
-  {n:'Steward',  m:250,  line:'You tend your inner ground with care.'},
-  {n:'Sovereign',m:500,  line:'You govern yourself. The pattern no longer rules.'},
-  {n:'Architect',m:1000, line:'You build freedom, for yourself and for others.'}
+  {n:'Pilgrim',  m:120,  line:'You keep going, even when it’s hard.'},
+  {n:'Steward',  m:250,  line:'You look after yourself with care.'},
+  {n:'Sovereign',m:500,  line:'You run your own life. The pattern doesn’t.'},
+  {n:'Architect',m:1000, line:'You’re building freedom, for yourself and for others.'}
 ];
-const EARN = [['Pledge',1],['Held day',3],['Noticed',2],['Urge ridden out',5],['Honest slip log',1],['Evening examen',2],['Belief questioned',8],['Daily dare',5],['Trial quest',10],['Trial complete',30],['Weekly step done',10],['Sunday review',5],['Season milestone',20],['Habit done',1]];
+const EARN = [['Morning promise',1],['Day free',3],['Caught it',2],['Got through an urge',5],['Honest slip logged',1],['Evening reflection',2],['Belief questioned',8],['Daily dare',5],['Challenge step',10],['7-day challenge done',30],['Weekly step done',10],['Sunday review',5],['Season milestone',20],['Habit done',1]];
 const TRIAL = [
-  {t:'Say it aloud',          d:'Tell your witness the name of the pattern you are walking out of.', auto:null},
-  {t:'Catch it once',         d:'Check in as Held or Noticed on any pattern.', auto:'check'},
-  {t:'Ride one wave',         d:'When the pull comes, tap “The pull is here” and ride it out.', auto:'urge'},
+  {t:'Say it aloud',          d:'Tell your accountability partner the name of the pattern you’re breaking.', auto:null},
+  {t:'Catch it once',         d:'Check in as Stayed free or Caught it on any pattern.', auto:'check'},
+  {t:'Beat one urge',         d:'When the urge comes, tap “I’m feeling the urge” and get through it.', auto:'urge'},
   {t:'Question the voice',    d:'Complete one “Question the belief” inquiry.', auto:'inquiry'},
   {t:'Before noon',           d:'Do your practice once before midday.', auto:null},
-  {t:'Write it on the mirror',d:'Write your truth where you’ll see it every day: a mirror, a door, your lock screen.', auto:null},
-  {t:'Sabbath',               d:'Close the day with the evening examen (at least two answers).', auto:'examen'}
+  {t:'Put it where you’ll see it',d:'Write your new truth somewhere you’ll see it every day: a mirror, a door, your lock screen.', auto:null},
+  {t:'End the day well',      d:'Do the evening reflection (at least two answers).', auto:'examen'}
 ];
 const DARES = [
   'Say no to one small thing today, kindly and without over-explaining.',
@@ -61,16 +61,16 @@ const DARES = [
   'Catch the trigger before it fires and name it out loud: “There it is.”',
   'Tell one person something true you would normally keep hidden.',
   'Write three things your pattern protected you from, and thank it for its service.',
-  'Fast from complaining for the whole day.',
+  'Go a whole day without complaining.',
   'Walk somewhere new for fifteen minutes and notice what you feel in your body.',
   'Forgive yourself, in writing, for one slip.',
-  'Ask your witness one question about their own patterns, and just listen.',
+  'Ask your accountability partner one question about their own patterns, and just listen.',
   'Give away one thing that belongs to the old pattern.',
   'Go to bed at the time the person you are becoming would.',
   'Rest for one hour without doing anything useful, and without guilt.',
   'Do your practice before you check your phone.',
   'Write a short letter from your future self, forty days from now.',
-  'Bless someone who once spoke the old belief over you. You don’t have to send it.'
+  'Write a kind message to someone who once told you the old belief. You don’t have to send it.'
 ];
 const STEPS = [
   {title:'Name the pattern', q:'What do you keep doing that you have promised yourself you would stop?', hint:'Give it a short name you’ll recognise, then describe what actually happens.',
@@ -85,21 +85,21 @@ const STEPS = [
     fields:[{k:'rootStory',label:'The first time I remember',type:'area',ph:'Where were you? Who was there? What did you decide about yourself?'}]},
   {title:'What it protected', q:'What has this pattern been protecting you from?', hint:'Every pattern began as a solution. Honour what it did for you before you let it go.',
     fields:[{k:'payoff',label:'It kept me safe from',type:'area',ph:'e.g. Being judged, being left, being too much'}]},
-  {title:'What it costs now', q:'What is it costing you, and the people around you, today?', hint:'Name the cost honestly. This is your reason for leaving, and you’ll see it again when the pull comes.',
+  {title:'What it costs now', q:'What is it costing you, and the people around you, today?', hint:'Name the cost honestly. This is your reason for changing, and you’ll see it again when an urge comes.',
     fields:[{k:'cost',label:'What it costs',type:'area',ph:'Time, money, trust, health, peace'}]},
-  {title:'Who you are becoming', q:'Who are you becoming, now that you are walking out?', hint:'Say it as “I am someone who …”. Every held day is a vote for this person.',
+  {title:'Who you are becoming', q:'Who are you becoming, now that you’re breaking free?', hint:'Say it as “I am someone who …”. Every day free is a vote for this person.',
     fields:[{k:'identity',label:'I am someone who',type:'input',ph:'e.g. finishes what I start'}]},
-  {title:'The new covenant', q:'What do you choose to believe instead, and what will you do when the trigger comes?', hint:'Write the truth in the first person. Make the practice small enough to do on a hard day, and tie it to the trigger: “When …, I will …”.',
+  {title:'The new way', q:'What do you choose to believe instead, and what will you do when the trigger comes?', hint:'Write the truth in the first person. Make the practice small enough to do on a hard day, and tie it to the trigger: “When …, I will …”.',
     fields:[{k:'truth',label:'The truth I choose',type:'area',ph:'e.g. My work can be imperfect and still be finished.'},{k:'practice',label:'When the trigger comes, I will',type:'area',ph:'e.g. Send one small piece to someone the same day.'}]}
 ];
 const QSTEPS = [
   {title:'How true does it feel?', q:'Read the belief slowly. Right now, how true does it feel?', hint:'0 means not at all. 100 means completely, without question.'},
-  {title:'Is it true?', q:'Is it true? And can you know, beyond all doubt, that it is true?', hint:'Answer from stillness, not from habit. A quick yes is often the old voice talking.'},
+  {title:'Is it true?', q:'Is it true? And can you know, beyond all doubt, that it is true?', hint:'Take a breath before you answer. A quick yes is often the old voice talking.'},
   {title:'Weigh the evidence', q:'What actually supports this belief, and what doesn’t?', hint:'Facts only: things a camera would have recorded, not interpretations.'},
   {title:'When you believe it', q:'What happens when you believe this thought?', hint:'In your body, in what you do next, in how you treat yourself and the people around you.'},
   {title:'Without it', q:'Who would you be in the same situation, without this thought?', hint:'Picture it. Same room, same people. Just without the belief.'},
   {title:'Turn it around', q:'Write the opposite, and find three real examples of it being true.', hint:'Turn it toward yourself, toward the other person, or to its opposite. Pick the one that rings truest.'},
-  {title:'How true now?', q:'Read the original belief again. How true does it feel now?', hint:'There is no right number. Any movement is the narrow place widening.'}
+  {title:'How true now?', q:'Read the original belief again. How true does it feel now?', hint:'There’s no right number. Any drop at all is progress.'}
 ];
 const EXAMPLE = {
   id:'example', example:true,
@@ -114,7 +114,7 @@ const EXAMPLE = {
   cost:'Half-built work everywhere, lost income, and people who no longer expect me to deliver.',
   identity:'finishes what I start',
   truth:'My work can be imperfect and still be finished. Being seen is safe now.',
-  practice:'When I feel the pull to go quiet, I send one small piece to someone that same day.',
+  practice:'When I feel the urge to go quiet, I send one small piece to someone that same day.',
   grid:'..........h.hhsh.hnhhhhs.hhhnhhhhhhhhhhh',
   inquiries:[{date:'', before:85, after:40, turn:'If I finish it, I can be judged, and I can survive that.'}],
   urges:[{trigger:'Client asked for a deadline',intensity:7,outcome:'rode',hour:16,dow:2},{trigger:'Imagining people seeing it',intensity:8,outcome:'won',hour:22,dow:0},{trigger:'Client asked for a deadline',intensity:5,outcome:'rode',hour:15,dow:4},{trigger:'Tired after school run',intensity:6,outcome:'rode',hour:21,dow:3}]
@@ -257,7 +257,7 @@ function syncQuest(){
     if (met){ q.done[i] = tk; changed = true; }
   });
   if (TRIAL.every((t, i) => q.done[i])){ q.complete = tk; q.trials = (q.trials||0) + 1; changed = true;
-    queueSeal({kicker:'Trial complete', name:'Seven Days Out', line:'Seven quests, seven days. You walked out on purpose. +30 manna.', emb:'seal'}); }
+    queueSeal({kicker:'Trial complete', name:'Seven Days Out', line:'Seven challenges, seven days. You did it. +30 points.', emb:'seal'}); }
   if (changed) save();
   return changed;
 }
@@ -286,14 +286,14 @@ function ring(n){
     const a = (i/40) * Math.PI*2 - Math.PI/2, r1 = 25, r2 = i < on ? 33 : 31;
     s += `<line class="tk${i<on?' on':''}" x1="${(38+Math.cos(a)*r1).toFixed(2)}" y1="${(38+Math.sin(a)*r1).toFixed(2)}" x2="${(38+Math.cos(a)*r2).toFixed(2)}" y2="${(38+Math.sin(a)*r2).toFixed(2)}"/>`;
   }
-  return `<svg class="ring" viewBox="0 0 76 76" role="img" aria-label="${on} of 40 days held">${s}<text x="38" y="44" text-anchor="middle">${on}</text></svg>`;
+  return `<svg class="ring" viewBox="0 0 76 76" role="img" aria-label="${on} of 40 days free">${s}<text x="38" y="44" text-anchor="middle">${on}</text></svg>`;
 }
 function stonesRow(held){
-  return `<div class="stones" aria-label="Waymarks">${STONES.map(s => `<div class="stone${held>=s.d?' on':''}" title="Day ${s.d}: ${esc(s.line)}"><span class="disc">${emb(s.emb)}</span><span>${s.name}<br>${s.d}</span></div>`).join('')}</div>`;
+  return `<div class="stones" aria-label="Milestones">${STONES.map(s => `<div class="stone${held>=s.d?' on':''}" title="Day ${s.d}: ${esc(s.line)}"><span class="disc">${emb(s.emb)}</span><span>${s.name}<br>${s.d}</span></div>`).join('')}</div>`;
 }
 function strengthBar(p){
   const v = strength(p);
-  return `<div class="strength" title="Rises with each held day and dips gently with a slip, so one bad day never wipes out your progress."><span>Hold strength</span><span class="track"><span class="fill" style="width:${v}%"></span></span><b>${v}%</b></div>`;
+  return `<div class="strength" title="Rises with each day free and dips gently with a slip, so one bad day never wipes out your progress."><span>Momentum</span><span class="track"><span class="fill" style="width:${v}%"></span></span><b>${v}%</b></div>`;
 }
 const stageChip = s => `<span class="chip stage" data-s="${s}">${emb(STAGES[s].emb)}${STAGES[s].name}</span>`;
 function toast(msg, ms){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, ms || 2600); }
@@ -332,7 +332,7 @@ function renderToday(){
   const slippedYesterday = !ex ? list.filter(p => checkOf(yk, p.id) === 'slipped' && !checkOf(k, p.id)) : [];
   let cards = '';
   if (!ex && list.length === 0){
-    cards = `<div class="empty">${emb('crown')}<h3>Every pattern you traced has been released.</h3><p class="muted">When you notice another narrow place, trace it here.</p><a class="btn" href="#trace" data-act="newTrace">Trace a pattern</a></div>`;
+    cards = `<div class="empty">${emb('crown')}<h3>You’ve let go of every pattern you traced.</h3><p class="muted">When you notice another one, trace it here.</p><a class="btn" href="#trace" data-act="newTrace">Trace a pattern</a></div>`;
   }
   for (const p of list){
     const st = stats(p);
@@ -341,19 +341,19 @@ function renderToday(){
     const nx = nextStone(st.held);
     const btn = (v, label, sub) => `<button type="button" class="choice" data-act="check" data-id="${esc(p.id)}" data-v="${v}" aria-pressed="${cur===v}"${p.example?' disabled':''}>${label}<small>${sub}</small></button>`;
     cards += `<article class="pcard${p.example?' is-example':''}">
-      <div class="ringwrap">${ring(st.held)}<span class="ringcap">of 40 held</span></div>
+      <div class="ringwrap">${ring(st.held)}<span class="ringcap">of 40 days</span></div>
       <div class="pbody">
         <div class="row">${p.example?'<span class="chip example">Example</span>':''}${stageChip(stageOf(p))}</div>
         <h3>${esc(p.name)}</h3>
-        ${p.identity?`<p class="identity">Each held day is a vote for: I am someone who ${esc(p.identity)}</p>`:''}
+        ${p.identity?`<p class="identity">Each day free is a vote for: I am someone who ${esc(p.identity)}</p>`:''}
         ${p.truth?`<p class="truth">${esc(p.truth)}</p>`:''}
         ${p.practice?`<p class="practice">${esc(p.practice)}</p>`:''}
         <div class="choices" role="group" aria-label="How did today go with ${esc(p.name)}?">
-          ${btn('held','Held','I kept my word')}${btn('noticed','Noticed','I caught it')}${btn('slipped','Slipped','It ran me')}
+          ${btn('held','Stayed free','I didn’t do it')}${btn('noticed','Caught it','It started, I stopped')}${btn('slipped','Slipped','It happened')}
         </div>
-        <div class="meta"><span>Hold strength <b>${strength(p)}%</b></span>${st.streak?`<span><b>${st.streak}</b> in a row</span>`:''}${nx?`<span>Next waymark: <b>${nx.name}</b> at ${nx.d}</span>`:''}</div>
+        <div class="meta"><span>Momentum <b>${strength(p)}%</b></span>${st.streak?`<span><b>${st.streak}</b> in a row</span>`:''}${nx?`<span>Next milestone: <b>${nx.name}</b> at day ${nx.d}</span>`:''}</div>
         ${cur==='slipped' && !p.example ? `<div><label class="lbl" for="slip-${esc(p.id)}">What happened just before?</label><textarea id="slip-${esc(p.id)}" data-bind="slip" data-id="${esc(p.id)}" placeholder="No judgement. Where were you, what did you feel, what did you tell yourself?">${esc(slipNote)}</textarea></div>` : ''}
-        <button type="button" class="pullbtn" data-act="urgeOpen" data-id="${esc(p.id)}"${p.example?' disabled':''}>The pull is here</button>
+        <button type="button" class="pullbtn" data-act="urgeOpen" data-id="${esc(p.id)}"${p.example?' disabled':''}>I’m feeling the urge</button>
       </div>
     </article>`;
   }
@@ -365,25 +365,25 @@ function renderToday(){
       <p class="eyebrow">Today</p>
       <p class="date">${now.toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p>
       ${!ex ? (pledged
-        ? `<div class="pledge done">${emb('seal')}<p><em>Today I walk out. I will hold my covenant for this one day.</em></p><span class="seal">Pledged ${esc(pledged)}</span></div>`
-        : `<div class="pledge"><p>Morning pledge: <em>Today I walk out. I will hold my covenant for this one day.</em></p><button class="btn gold small" type="button" data-act="pledge">Make my pledge</button></div>`) : ''}
+        ? `<div class="pledge done">${emb('seal')}<p><em>Just for today, I choose the new way. I’ll keep my promise to myself.</em></p><span class="seal">Promised ${esc(pledged)}</span></div>`
+        : `<div class="pledge"><p>Morning promise: <em>Just for today, I choose the new way. I’ll keep my promise to myself.</em></p><button class="btn gold small" type="button" data-act="pledge">Make my promise</button></div>`) : ''}
       <div><label class="lbl" for="intention">Morning intention</label>
-      <input type="text" id="intention" data-bind="intention" placeholder="Today I will walk as someone who…" value="${esc(state.intentions[k]||'')}"></div>
+      <input type="text" id="intention" data-bind="intention" placeholder="Today I will be someone who…" value="${esc(state.intentions[k]||'')}"></div>
       <a class="dare-mini" href="#quest"><span class="emb-badge">${emb('flame')}</span><p><span class="eyebrow">Today’s dare${dareDone?' · done':''}</span><br>${esc(todaysDare())}</p></a>
       ${renderNudge()}
     </div>
-    ${slippedYesterday.length ? `<p class="notice"><b>Never twice.</b> Yesterday ${esc(slippedYesterday.map(p=>p.name).join(' and '))} ran you. One slip is a stumble; two in a row starts a road back. Today matters more than yesterday.</p>` : ''}
+    ${slippedYesterday.length ? `<p class="notice"><b>Never twice.</b> Yesterday ${esc(slippedYesterday.map(p=>p.name).join(' and '))} got the better of you. One slip is just a stumble; it’s two in a row that pulls you back. Today matters more than yesterday.</p>` : ''}
     ${ex ? `<div class="empty">${emb('gate')}<p class="eyebrow">Begin here</p><h3>You haven’t traced a pattern yet.</h3><p class="muted small">Below is an example of a traced pattern once you’re checking in each day. Trace your own and it takes the example’s place.</p><a class="btn gold" href="#trace" data-act="newTrace">Trace your first pattern</a></div>` : ''}
     <div class="stack">${cards}</div>
     ${renderHabits()}
     ${!ex ? `<div class="examen">
-      <div class="stack-sm"><p class="eyebrow">Evening examen</p><p class="muted small">Four questions to close the day, adapted from the Ignatian examen.</p></div>
-      ${exField('grateful','I give thanks for','One gift from today, however small')}
-      ${exField('free','Where I walked free','A moment the new covenant held')}
-      ${exField('pulled','Where the old pattern pulled','When, where, and what you told yourself')}
-      ${exField('tomorrow','For tomorrow, I ask for','Strength, patience, courage… whatever tomorrow needs')}
+      <div class="stack-sm"><p class="eyebrow">Evening reflection</p><p class="muted small">Four quick questions to look back on your day.</p></div>
+      ${exField('grateful','I’m grateful for','One good thing from today, however small')}
+      ${exField('free','Where I did well','A moment I chose the new way')}
+      ${exField('pulled','Where the old pattern tugged at me','When, where, and what you told yourself')}
+      ${exField('tomorrow','For tomorrow, I need','Strength, patience, courage… whatever tomorrow needs')}
     </div>` : ''}
-    ${released ? `<p class="muted small">${released} pattern${released>1?'s':''} crossed over into the Promised Land.</p>` : ''}
+    ${released ? `<p class="muted small">${released} pattern${released>1?'s':''} let go for good.</p>` : ''}
   </section>`;
 }
 
@@ -395,51 +395,51 @@ function renderQuest(){
   const q = state.quest;
   let trial = '';
   if (ex){
-    trial = `<div class="empty">${emb('seal')}<h3>Trace a pattern to begin the trial.</h3><a class="btn" href="#trace" data-act="newTrace">Trace a pattern</a></div>`;
+    trial = `<div class="empty">${emb('seal')}<h3>Trace a pattern to start the 7-day challenge.</h3><a class="btn" href="#trace" data-act="newTrace">Trace a pattern</a></div>`;
   } else if (!q.start || q.complete){
     trial = `<div class="panel">
-      ${q.complete ? `<div class="row">${emb('seal')}<p><b>Completed on ${fmtLong(fromKey(q.complete))}.</b> ${q.trials>1?`You have walked this trial ${q.trials} times.`:''}</p></div>` : ''}
-      <p>Seven quests over seven days. One opens each morning. Some complete themselves when you log the right thing; the others you mark yourself, on your honour.</p>
-      <div class="row"><button class="btn gold" type="button" data-act="trialStart">${q.complete?'Walk it again':'Begin the trial'}</button><span class="muted small">+10 manna a quest, +30 when all seven are sealed</span></div>
+      ${q.complete ? `<div class="row">${emb('seal')}<p><b>Completed on ${fmtLong(fromKey(q.complete))}.</b> ${q.trials>1?`You’ve done this challenge ${q.trials} times.`:''}</p></div>` : ''}
+      <p>Seven small challenges over seven days. A new one opens each morning. Some tick themselves off when you log the right thing; the rest you tick yourself, on your honour.</p>
+      <div class="row"><button class="btn gold" type="button" data-act="trialStart">${q.complete?'Do it again':'Start the challenge'}</button><span class="muted small">+10 points each, +30 when all seven are done</span></div>
     </div>`;
   } else {
     const tk = todayKey();
     const done = TRIAL.filter((t,i)=>q.done[i]).length;
     trial = `<div class="trial">
-      <div class="row"><div class="seals" aria-label="${done} of 7 sealed">${TRIAL.map((t,i)=>`<i class="${q.done[i]?'on':''}"></i>`).join('')}</div><span class="muted small">${done} of 7 sealed · begun ${fmtShort(fromKey(q.start))}</span></div>
+      <div class="row"><div class="seals" aria-label="${done} of 7 done">${TRIAL.map((t,i)=>`<i class="${q.done[i]?'on':''}"></i>`).join('')}</div><span class="muted small">${done} of 7 done · started ${fmtShort(fromKey(q.start))}</span></div>
       ${TRIAL.map((t, i) => {
         const u = questUnlock(i), locked = tk < u, isDone = !!q.done[i];
-        const st = isDone ? `<span class="qstate done">Sealed</span>` : locked ? `<span class="qstate">Opens ${fmtDay(fromKey(u))}</span>`
-          : t.auto ? `<span class="qstate">Seals when you log it</span>` : `<button class="btn small" type="button" data-act="questDone" data-i="${i}">I did it</button>`;
+        const st = isDone ? `<span class="qstate done">Done</span>` : locked ? `<span class="qstate">Opens ${fmtDay(fromKey(u))}</span>`
+          : t.auto ? `<span class="qstate">Ticks itself when you log it</span>` : `<button class="btn small" type="button" data-act="questDone" data-i="${i}">I did it</button>`;
         return `<div class="quest ${isDone?'done':locked?'locked':'open'}"><span class="num">${isDone?emb('seal'):i+1}</span><div><h3>${t.t}</h3><p>${t.d}</p></div><div class="qside">${st}</div></div>`;
       }).join('')}
-      <button class="btn text" type="button" data-act="trialAbandon">Start the trial over</button>
+      <button class="btn text" type="button" data-act="trialAbandon">Start the challenge again</button>
     </div>`;
   }
   return `<section class="stack-lg">
-    <div class="stack-sm"><p class="eyebrow">Quest</p><h2>Gather manna. Rise in rank.</h2></div>
+    <div class="stack-sm"><p class="eyebrow">Quest</p><h2>Earn points. Move up a level.</h2></div>
     <div class="rank">
       ${jar(frac)}
       <div class="stack-sm">
-        <p class="eyebrow">Your rank</p>
+        <p class="eyebrow">Your level</p>
         <p class="title">${RANKS[r].n}</p>
         <p class="muted small">${RANKS[r].line}</p>
         <span class="track"><span class="fill" style="width:${Math.round(frac*100)}%"></span></span>
-        <p class="small">${m} manna${next?` · ${next.m - m} more to <b>${next.n}</b>`:' · the highest rank'}</p>
+        <p class="small">${m} points${next?` · ${next.m - m} more to <b>${next.n}</b>`:' · the highest level'}</p>
       </div>
     </div>
-    ${ex?'<p class="muted small">Manna starts gathering once you trace your first pattern.</p>':''}
+    ${ex?'<p class="muted small">You start earning points once you trace your first pattern.</p>':''}
     <div class="dare">
-      <div class="row"><span class="emb-badge">${emb('flame')}</span><div class="stack-sm" style="gap:2px"><p class="eyebrow">Today’s dare</p><p class="muted small">A new one every day · +5 manna</p></div></div>
+      <div class="row"><span class="emb-badge">${emb('flame')}</span><div class="stack-sm" style="gap:2px"><p class="eyebrow">Today’s dare</p><p class="muted small">A new one every day · +5 points</p></div></div>
       <p class="text">${esc(todaysDare())}</p>
-      <div>${dareDone ? `<span class="ok">Done today. Well walked.</span>` : `<button class="btn gold" type="button" data-act="dare"${ex?' disabled':''}>I did it</button>`}</div>
+      <div>${dareDone ? `<span class="ok">Done today. Well done.</span>` : `<button class="btn gold" type="button" data-act="dare"${ex?' disabled':''}>I did it</button>`}</div>
     </div>
     <div class="stack">
-      <div class="section-head"><div class="stack-sm" style="gap:2px"><p class="eyebrow">The trial</p><h2>Seven Days Out</h2></div></div>
+      <div class="section-head"><div class="stack-sm" style="gap:2px"><p class="eyebrow">7-day challenge</p><h2>Seven Days Out</h2></div></div>
       ${trial}
     </div>
-    <div class="stack-sm"><p class="eyebrow">How manna is gathered</p><div class="earn">${EARN.map(([l,n])=>`<div><span>${l}</span><b>+${n}</b></div>`).join('')}</div>
-      <p class="muted small">Ranks: ${RANKS.map(x=>`${x.n} (${x.m})`).join(' · ')}</p></div>
+    <div class="stack-sm"><p class="eyebrow">How to earn points</p><div class="earn">${EARN.map(([l,n])=>`<div><span>${l}</span><b>+${n}</b></div>`).join('')}</div>
+      <p class="muted small">Levels: ${RANKS.map(x=>`${x.n} (${x.m})`).join(' · ')}</p></div>
   </section>`;
 }
 
@@ -454,7 +454,7 @@ function mapList(p){
     ${row('What I do', p.habit)}
     ${row('What it protected', p.payoff)}
     ${row('What it costs', p.cost)}
-    ${(p.truth||p.practice||p.identity) ? `<li class="divider">The New Covenant</li>` : ''}
+    ${(p.truth||p.practice||p.identity) ? `<li class="divider">The new way</li>` : ''}
     ${row('I am someone who', p.identity, 'cov')}
     ${row('The truth I choose', p.truth, 'cov')}
     ${row('When the trigger comes', p.practice, 'cov')}
@@ -503,7 +503,7 @@ function renderPatterns(){
       <div class="pat-top">
         <div class="row">${p.example?'<span class="chip example">Example</span>':''}${stageChip(s)}${p.rootType?`<span class="chip root">${ROOTS[p.rootType].label}</span>`:''}</div>
         <h3>${esc(p.name)}</h3>
-        <p class="muted small">${p.released ? `Released on ${fmtLong(fromKey(p.releasedAt))}` : `${st.held} of 40 days held · ${st.noticed} noticed · ${st.slipped} slipped · ${urgesFor(p).filter(u=>u.outcome==='rode').length} urges ridden out`}</p>
+        <p class="muted small">${p.released ? `Released on ${fmtLong(fromKey(p.releasedAt))}` : `${st.held} of 40 days free · ${st.noticed} caught · ${st.slipped} slipped · ${urgesFor(p).filter(u=>u.outcome==='rode').length} urges beaten`}</p>
       </div>
       ${!p.released ? strengthBar(p) + stonesRow(st.held) : ''}
       ${open ? mapList(p) + renderInquiries(p) + renderMirror(p) : ''}
@@ -523,7 +523,7 @@ function renderPatterns(){
     <div class="section-head"><div class="stack-sm"><p class="eyebrow">Your patterns</p><h2>Every pattern has a root</h2></div>
     <a class="btn gold" href="#trace" data-act="newTrace">Trace a pattern</a></div>
     ${!isPlus() && !showingExample() ? `<p class="muted small">Free plan: one pattern at a time. <a href="#plus">Plus</a> lets you trace as many as you need.</p>` : ''}
-    <p class="muted">Each map reads from the root to the fruit: where the pattern came from, the belief it planted, and what grows from it now. Below the gold line is the covenant replacing it. The waymarks follow the route out of Egypt.</p>
+    <p class="muted">Each map reads from top to bottom: where the pattern came from, the belief behind it, and what it causes now. Below the gold line is the new way you’re choosing instead.</p>
     <div class="stack">${h}</div>
   </section>`;
 }
@@ -531,7 +531,7 @@ function renderPatterns(){
 function blankDraft(){ return {name:'',habit:'',trigger:'',belief:'',voice:'',rootType:'',rootStory:'',payoff:'',cost:'',identity:'',truth:'',practice:''}; }
 
 function renderTrace(){
-  if (!editingId && !isPlus() && activeCount() >= 1) return `<section class="stack-lg"><div class="stack-sm"><p class="eyebrow">Trace a pattern</p><h2>One pattern at a time on the free plan</h2></div>${plusLock('Walk out of more than one pattern', 'You\u2019re already walking out of one pattern. Release it, or upgrade to Plus to trace as many as you need.')}</section>`;
+  if (!editingId && !isPlus() && activeCount() >= 1) return `<section class="stack-lg"><div class="stack-sm"><p class="eyebrow">Trace a pattern</p><h2>One pattern at a time on the free plan</h2></div>${plusLock('Work on more than one pattern', 'You\u2019re already walking out of one pattern. Release it, or upgrade to Plus to trace as many as you need.')}</section>`;
   if (!draft){ draft = blankDraft(); editingId = null; step = 0; }
   const S = STEPS[step];
   let prog = '';
@@ -563,7 +563,7 @@ function renderTrace(){
     </div>
     <div class="step-nav">
       ${step>0 ? `<button class="btn ghost" type="button" data-act="back">Back</button>` : `<button class="btn text" type="button" data-act="cancelTrace">Cancel</button>`}
-      ${last ? `<button class="btn gold" type="button" data-act="saveTrace">${editingId?'Save changes':'Seal the covenant'}</button>` : `<button class="btn" type="button" data-act="next">Next</button>`}
+      ${last ? `<button class="btn gold" type="button" data-act="saveTrace">${editingId?'Save changes':'Save my pattern'}</button>` : `<button class="btn" type="button" data-act="next">Next</button>`}
     </div>
   </section>`;
 }
@@ -617,7 +617,7 @@ function renderJourney(){
     <circle class="st${i===5?' final':''}" cx="${pts[i][0]}" cy="${pts[i][1]}" r="6"/>
     <text class="lbl" x="${pts[i][0]}" y="${pts[i][1]+24}" text-anchor="middle">${s.name}</text>
     <text class="sub" x="${pts[i][0]}" y="${pts[i][1]+38}" text-anchor="middle">${s.sub}</text>`).join('');
-  const svg = `<svg viewBox="-28 0 776 200" role="img" aria-label="Map of the journey from the narrow place to the promised land, with your patterns placed at each stage">
+  const svg = `<svg viewBox="-28 0 776 200" role="img" aria-label="Map of the journey from first naming a pattern to being free of it, with your patterns placed at each stage">
     ${stars}
     <path class="strait" d="M14 132 Q34 140 60 146"/><path class="strait" d="M14 168 Q34 160 60 154"/>
     <path class="road" d="M48 150 C100 150 120 96 170 96 S246 124 292 124 S370 142 414 142 S500 86 548 86 S632 58 676 58"/>
@@ -652,17 +652,17 @@ function renderJourney(){
   const totalHeld = list.reduce((a,p)=>a+stats(p).held,0);
 
   return `<section class="stack-lg">
-    <div class="stack-sm"><p class="eyebrow">Journey</p><h2>From the narrow place to the promised land</h2></div>
+    <div class="stack-sm"><p class="eyebrow">Journey</p><h2>How far you’ve come</h2></div>
     ${!ex ? `<div class="ppf">
       <a href="#patterns"><svg class="emb" aria-hidden="true"><use href="#e-narrow"/></svg><b>Past</b><span>${realPatterns().length} pattern${realPatterns().length===1?'':'s'} traced to the root</span></a>
-      <a href="#today"><svg class="emb" aria-hidden="true"><use href="#e-tent"/></svg><b>Present</b><span>${list.reduce((a,p)=>a+stats(p).held,0)} days held</span></a>
+      <a href="#today"><svg class="emb" aria-hidden="true"><use href="#e-tent"/></svg><b>Present</b><span>${list.reduce((a,p)=>a+stats(p).held,0)} days free</span></a>
       <a href="#future" class="now"><svg class="emb" aria-hidden="true"><use href="#e-sunrise"/></svg><b>Future</b><span>${G() ? `Week ${yearWeek()} of 52: ${esc(state.goals[0].goal)}${state.goals.length > 1 ? ` (+${state.goals.length - 1} more)` : ''}` : 'Your Sovereign Year is waiting'}</span></a>
     </div>` : ''}
     ${ex?'<p class="muted small"><span class="chip example">Example</span> These figures show the example pattern until you trace your own.</p>':''}
     <div class="pathbox">${svg}</div>
     <div class="stats">
-      <div class="stat"><b>${totalHeld}</b><span>Days held</span></div>
-      <div class="stat"><b>${rode}<span class="muted" style="font-size:1rem"> / ${urges.length}</span></b><span>Urges ridden out</span></div>
+      <div class="stat"><b>${totalHeld}</b><span>Days free</span></div>
+      <div class="stat"><b>${rode}<span class="muted" style="font-size:1rem"> / ${urges.length}</span></b><span>Urges beaten</span></div>
       <div class="stat"><b>${list.filter(p=>p.released).length}</b><span>Released</span></div>
     </div>
     ${mirrorOn() && !ex ? `<div class="insight">
@@ -678,8 +678,8 @@ function renderJourney(){
     </div>` : ''}
     <div class="insight">
       <p class="eyebrow">What sets it off</p>
-      ${topT.length ? `<ol class="toplist">${topT.map(t => `<li>${esc(t.label)} <span class="muted small">· ${t.n} time${t.n>1?'s':''}</span></li>`).join('')}</ol>` : '<p class="muted small">Log an urge with “The pull is here” and your triggers will gather here.</p>'}
-      <p class="lbl" style="margin:8px 0 0">When the pull comes</p>
+      ${topT.length ? `<ol class="toplist">${topT.map(t => `<li>${esc(t.label)} <span class="muted small">· ${t.n} time${t.n>1?'s':''}</span></li>`).join('')}</ol>` : '<p class="muted small">Log an urge with “I’m feeling the urge” and your triggers will show up here.</p>'}
+      <p class="lbl" style="margin:8px 0 0">When the urges come</p>
       ${bars(tod, true)}
       <p class="lbl" style="margin:8px 0 0">Slips by day of the week</p>
       ${anySlips ? bars(dowMon, true) : '<p class="muted small">No slips logged yet.</p>'}
@@ -687,15 +687,15 @@ function renderJourney(){
     <ol class="stagelist">${STAGES.map((s,i)=>`<li>${emb(s.emb)}<b>${s.name}</b><span class="muted small">${s.desc}</span><span class="meta">${counts[i]} pattern${counts[i]===1?'':'s'}</span></li>`).join('')}</ol>
     <div class="etym">
       <span class="heb" lang="he">מִצְרַיִם</span>
-      <span class="t">Mitzrayim · Egypt</span>
-      <span class="muted small">Read in Hebrew tradition through <em>tsar</em>, “narrow, constricted”: Egypt as the narrow place. Every pattern is a narrow place you learned to live in. Israel walked out of it and spent forty years in the wilderness, learning to live free. Here, forty held days mark the same passage.</span>
+      <span class="t">Why forty days?</span>
+      <span class="muted small">The Hebrew word for Egypt, <em>Mitzrayim</em>, comes from <em>tsar</em>, meaning “narrow” or “tight”. A pattern is a tight place you learned to live in. In the Exodus story, people left that place and took forty years to learn to live free. Here, forty days free marks the same journey.</span>
     </div>
     <div class="stack"><p class="eyebrow">The last forty days</p>
-      <div class="legend"><span><i class="held"></i>Held</span><span><i class="noticed"></i>Noticed</span><span><i class="slipped"></i>Slipped</span><span><i></i>No check-in</span></div>
-      ${grids || '<p class="muted">No patterns in the wilderness right now.</p>'}
+      <div class="legend"><span><i class="held"></i>Stayed free</span><span><i class="noticed"></i>Caught it</span><span><i class="slipped"></i>Slipped</span><span><i></i>No check-in</span></div>
+      ${grids || '<p class="muted">No patterns in progress right now.</p>'}
     </div>
     <div class="stack"><p class="eyebrow">Where your patterns come from</p>${bars(Object.entries(ROOTS).map(([k,r]) => [r.label, rootCounts[k]||0]))}
-      <p class="muted small">When one root keeps appearing, the work is often with that root, not each branch.</p></div>
+      <p class="muted small">If one source keeps coming up, that’s often the thing to work on, rather than each pattern separately.</p></div>
   </section>`;
 }
 
@@ -713,7 +713,7 @@ const YSTEPS = [
   {title:'Who you are becoming', q:'Who are you becoming this year?', hint:'Carry forward an “I am someone who…” from a pattern you’ve traced, or write a new one. The whole year is built for this person.'},
   {title:'One goal', q:'What is the one thing you will build in the next 52 weeks?', hint:'One goal, not five. Make it something you’ll clearly know you’ve done: “Publish my book”, not “write more”.'},
   {title:'How you\u2019ll know', q:'How will you know you\u2019re getting there?', hint:'Some goals are a number: money saved, weight, words written, clients signed. If yours is, track it and watch the line move each week. If not, your weekly steps are the measure.'},
-  {title:'Why it matters', q:'Why does this matter, and what are you walking out of to get there?', hint:'The future grows from the past. Link it to a pattern you’re leaving behind, if one fits.'},
+  {title:'Why it matters', q:'Why does this matter, and what are you leaving behind to get there?', hint:'The future grows from the past. Link it to a pattern you’re leaving behind, if one fits.'},
   {title:'Four seasons', q:'What will be true at the end of each season?', hint:'A milestone every 13 weeks. Rough is fine; you can change these later.'},
   {title:'Week one', q:'Write a letter from your future self, and choose this week’s first step.', hint:'Your future self has already done it. What do they want you to know? Then name one step small enough to finish in the next seven days.'}
 ];
@@ -756,7 +756,7 @@ function renderYearSetup(){
       <div><label class="lbl" for="y-munit">Unit</label><input type="text" id="y-munit" data-bind="ydraft" data-k="mUnit" placeholder="e.g. \u00a3, kg, words" value="${esc(d.mUnit)}"></div>
     </div><p class="muted small">It works both ways: going up (saving \u00a35,000) or down (from 14 stone to 12). Each Sunday you\u2019ll log where you are.</p>` : ''}`;
   if (ystep === 3) body = `<div><label class="lbl" for="y-why">Why it matters</label><textarea id="y-why" data-bind="ydraft" data-k="why" placeholder="Who benefits? What changes when it’s done?">${esc(d.why)}</textarea></div>
-    ${realPatterns().length ? `<div><span class="lbl">It grows from walking out of</span><div class="row">${realPatterns().map(p => `<button type="button" class="pick${d.fromPattern===p.id?' on':''}" data-act="yPickPattern" data-v="${esc(p.id)}" aria-pressed="${d.fromPattern===p.id}">${esc(p.name)}</button>`).join('')}</div></div>` : ''}`;
+    ${realPatterns().length ? `<div><span class="lbl">Linked to the pattern I’m breaking</span><div class="row">${realPatterns().map(p => `<button type="button" class="pick${d.fromPattern===p.id?' on':''}" data-act="yPickPattern" data-v="${esc(p.id)}" aria-pressed="${d.fromPattern===p.id}">${esc(p.name)}</button>`).join('')}</div></div>` : ''}`;
   if (ystep === 4) body = SEASONS.map((s, i) => `<div><label class="lbl" for="y-s${i}">${s.name} · by week ${s.to}</label><input type="text" id="y-s${i}" data-bind="yseason" data-i="${i}" placeholder="${['e.g. First three chapters drafted','e.g. Full first draft finished','e.g. Edited and cover designed','e.g. Published and launched'][i]}" value="${esc(d.seasons[i])}"></div>`).join('');
   if (ystep === 5) body = `<div><label class="lbl" for="y-letter">A letter from your future self (optional)</label><textarea id="y-letter" data-bind="ydraft" data-k="letter" placeholder="Dear me, a year ago today…">${esc(d.letter)}</textarea></div>
     <div><label class="lbl" for="y-first">This week’s first step</label><input type="text" id="y-first" data-bind="ydraft" data-k="firstStep" placeholder="One thing you can finish in seven days" value="${esc(d.firstStep)}"></div>`;
@@ -773,18 +773,18 @@ function renderYearSetup(){
 
 function renderFuture(){
   const y = G();
-  if (!isPlus()) return `<section class="stack-lg"><div class="stack-sm"><p class="eyebrow">Future</p><h2>Build on the ground you\u2019ve cleared</h2></div>
+  if (!isPlus()) return `<section class="stack-lg"><div class="stack-sm"><p class="eyebrow">Future</p><h2>Now build what’s next</h2></div>
       <div class="ppf"><div><svg class="emb" aria-hidden="true"><use href="#e-narrow"/></svg><b>Past</b><span>Where it came from. You trace it.</span></div><div><svg class="emb" aria-hidden="true"><use href="#e-tent"/></svg><b>Present</b><span>What you do today. You hold it.</span></div><div class="now"><svg class="emb" aria-hidden="true"><use href="#e-sunrise"/></svg><b>Future</b><span>Who you are building. You plan it.</span></div></div>
       ${plusLock('Your Sovereign Year', 'One goal, built over 52 weeks: a small step each week, a Sunday review, four seasons and the Mirror as your coach.')}${y ? '<p class="muted small">Your Sovereign Year is saved and will be waiting for you.</p>' : ''}</section>`;
   if (!y){
     return `<section class="stack-lg">
-      <div class="stack-sm"><p class="eyebrow">Future</p><h2>Build on the ground you’ve cleared</h2></div>
+      <div class="stack-sm"><p class="eyebrow">Future</p><h2>Now build what’s next</h2></div>
       <div class="ppf">
         <div><svg class="emb" aria-hidden="true"><use href="#e-narrow"/></svg><b>Past</b><span>Where it came from. You trace it.</span></div>
         <div><svg class="emb" aria-hidden="true"><use href="#e-tent"/></svg><b>Present</b><span>What you do today. You hold it.</span></div>
         <div class="now"><svg class="emb" aria-hidden="true"><use href="#e-sunrise"/></svg><b>Future</b><span>Who you are building. You plan it.</span></div>
       </div>
-      <p>Walking out of a pattern leaves space. Your <b>Sovereign Year</b> fills it on purpose: one goal, built over 52 weeks, one small step a week, with a review every Sunday and four seasons to mark the way.</p>
+      <p>Breaking a pattern frees up time and energy. Your <b>Sovereign Year</b> puts it to good use: one goal, built over 52 weeks, one small step a week, with a review every Sunday and four seasons to mark the way.</p>
       <div class="row"><a class="btn gold" href="#yearsetup" data-act="yStart">Begin my Sovereign Year</a></div>
       <p class="muted small">It takes about five minutes to set up. You can change everything later.</p>
     </section>`;
@@ -827,12 +827,12 @@ function renderFuture(){
         <p class="eyebrow">${S.name} · weeks ${S.from}–${S.to}</p>
         <p class="identity" style="color:var(--crack)">I am someone who ${esc(y.identity)}</p>
         <p class="muted small">${done} of 52 weekly steps done · began ${fmtLong(fromKey(y.start))}</p>
-        ${y.fromPattern && realPatterns().find(p=>p.id===y.fromPattern) ? `<p class="muted small">Growing from walking out of: <b style="color:var(--sky-ink)">${esc(realPatterns().find(p=>p.id===y.fromPattern).name)}</b></p>` : ''}
+        ${y.fromPattern && realPatterns().find(p=>p.id===y.fromPattern) ? `<p class="muted small">Linked to breaking: <b style="color:var(--sky-ink)">${esc(realPatterns().find(p=>p.id===y.fromPattern).name)}</b></p>` : ''}
       </div>
     </div>
     ${finished ? `<div class="empty">${emb('crown')}<h3>Your Sovereign Year is complete.</h3><p class="muted">Read your letter again. Then, when you’re ready, begin the next one.</p><button class="btn gold" type="button" data-act="yNewYear">Begin a new year</button></div>` : `
     <div class="dare">
-      <div class="row"><span class="emb-badge">${emb('sprout')}</span><div class="stack-sm" style="gap:2px"><p class="eyebrow">This week’s step · week ${n}</p><p class="muted small">${fmtShort(weekStart(n))} to ${fmtShort(addDays(weekStart(n),6))} · +10 manna when done</p></div></div>
+      <div class="row"><span class="emb-badge">${emb('sprout')}</span><div class="stack-sm" style="gap:2px"><p class="eyebrow">This week’s step · week ${n}</p><p class="muted small">${fmtShort(weekStart(n))} to ${fmtShort(addDays(weekStart(n),6))} · +10 points when done</p></div></div>
       ${cur.step ? `<p class="text">${esc(cur.step)}</p>` : `<div><label class="lbl" for="y-step">Set this week’s step</label><input type="text" id="y-step" data-bind="ystepnow" placeholder="One thing you can finish in seven days" value="${esc(stepNow)}"></div><div><button class="btn small" type="button" data-act="ySetStep">Set my step</button></div>`}
       ${cur.step ? `<div class="row">${cur.done==='yes' ? '<span class="ok">Done. Well built.</span><button class="btn text" type="button" data-act="yStepUndo">Undo</button>'
         : cur.done==='partly' ? '<span class="muted small">Partly done.</span><button class="btn gold small" type="button" data-act="yStepDone">I finished it</button>'
@@ -881,7 +881,7 @@ function plusLock(title, line){
 
 function renderPlus(){
   const benefits = [
-    ['narrow','Unlimited patterns','Walk out of more than one narrow place at a time.'],
+    ['narrow','Unlimited patterns','Work on more than one pattern at a time.'],
     ['eye','Question the belief','The seven-step inquiry that loosens the belief beneath the pattern.'],
     ['sunrise','The Future','Your Sovereign Year: one goal, 52 weekly steps, four seasons, Sunday reviews.'],
     ['seal','The Mirror','AI reflections on your patterns, your week and your next step.']
@@ -901,7 +901,7 @@ function renderPlus(){
   }
   return `<section class="stack-lg">
     <div class="stack-sm"><p class="eyebrow">Crossing Plus</p><h2>Go deeper, and build what comes next</h2></div>
-    <p>The free Crossing gives you everything you need to walk out of one pattern, day by day. Plus adds the deeper work.</p>
+    <p>The free Crossing gives you everything you need to break one pattern, day by day. Plus adds the deeper work.</p>
     <ul class="gate-points">${benefits.map(([e,t,l]) => `<li>${emb(e)}<span><b>${t}.</b> ${l}</span></li>`).join('')}</ul>
     <div class="plans">
       <div class="plan"><p class="eyebrow">Monthly</p><p class="price">${PRICES.monthly}<span> a month</span></p><button class="btn gold" type="button" data-act="checkout" data-plan="monthly"${plusBusy?' disabled':''}>${plusBusy==='monthly'?'Opening…':'Choose monthly'}</button></div>
@@ -1050,7 +1050,7 @@ function renderHabits(){
     : !isPlus() ? `<p class="muted small">Free plan: one habit at a time. <a href="#plus">Plus</a> lets you build up to ${HABITS_PLUS}.</p>`
     : `<p class="muted small">You’re building ${HABITS_PLUS} habits, the most at once. Remove one to add another.</p>`;
   return `<div class="stack habits">
-    <div class="stack-sm"><p class="eyebrow">Habits I’m building</p><p class="muted small">The patterns above are what you’re walking out of. These are what you’re walking into, one tick a day. +1 manna each.</p></div>
+    <div class="stack-sm"><p class="eyebrow">Habits I’m building</p><p class="muted small">The patterns above are what you’re leaving behind. These are what you’re building instead, one tick a day. +1 point each.</p></div>
     ${rows || (habitFormOpen ? '' : '<p class="muted small">No habits yet. Add one small thing you want to do every day.</p>')}
     ${form}
   </div>`;
@@ -1088,7 +1088,7 @@ function renderNudge(){
   if (nudgeHidden || !['off','ios-install'].includes(push.state)) return '';
   return `<div class="nudge">
     <span class="emb-badge">${emb('lamp')}</span>
-    <p><b>Get your reminders on your phone.</b> A gentle nudge for your pledge, your examen and your Sunday review.</p>
+    <p><b>Get your reminders on your phone.</b> A gentle nudge for your morning promise, your evening reflection and your Sunday review.</p>
     <div class="row"><a class="btn small" href="#witness">Set it up</a><button class="btn text" type="button" data-act="nudgeHide">Not now</button></div>
   </div>`;
 }
@@ -1104,7 +1104,7 @@ function renderPush(){
   else {
     const on = push.state === 'on';
     const sel = (id, list, val, label) => `<div><label class="lbl" for="${id}">${label}</label><select id="${id}" data-bind="pushPref" data-k="${id === 'pn-m' ? 'morning' : 'evening'}"><option value="">Off</option>${list.map(t => `<option value="${t}"${t === val ? ' selected' : ''}>${clock(t)}</option>`).join('')}</select></div>`;
-    body = `<div class="two">${sel('pn-m', MORNING_TIMES, push.prefs.morning, 'Morning pledge')}${sel('pn-e', EVENING_TIMES, push.prefs.evening, 'Evening examen')}</div>
+    body = `<div class="two">${sel('pn-m', MORNING_TIMES, push.prefs.morning, 'Morning promise')}${sel('pn-e', EVENING_TIMES, push.prefs.evening, 'Evening reflection')}</div>
       <label class="check"><input type="checkbox" id="pn-s" data-bind="pushPref" data-k="sunday"${push.prefs.sunday ? ' checked' : ''}> <span>Sunday 6pm: close your week (only if you have a Sovereign Year goal)</span></label>
       <div class="row">${on
         ? `<button class="btn ghost small" type="button" data-act="pushTest"${push.busy?' disabled':''}>${push.busy==='test'?'Sending…':'Send me a test'}</button><button class="btn text" type="button" data-act="pushOff"${push.busy?' disabled':''}>Turn off on this device</button>`
@@ -1124,7 +1124,7 @@ function weekSummary(){
   const list = ex ? [EXAMPLE] : realPatterns().filter(p => !p.released);
   const days = []; for (let i = 6; i >= 0; i--) days.push(addDays(new Date(), -i));
   const dset = new Set(days.map(dkey));
-  const name = (state.witness.name||'').trim() || 'my witness';
+  const name = (state.witness.name||'').trim() || 'my accountability partner';
   const L = [];
   if (ex) L.push('(Example — this fills in from your own check-ins)', '');
   L.push(`Weekly check-in for ${name}`, `The Crossing · ${fmtShort(days[0])} to ${fmtShort(days[6])}`, '');
@@ -1135,8 +1135,8 @@ function weekSummary(){
       else v = checkOf(dkey(d), p.id);
       if (v==='held') h++; else if (v==='noticed') n++; else if (v==='slipped') s++; });
     const ur = p.example ? p.urges : state.urges.filter(u => u.pid === p.id && dset.has(u.date));
-    L.push(`• ${p.name}: held ${h} of 7 days, noticed ${n}, slipped ${s}. ${Math.min(stats(p).held,40)} of 40 days held so far (hold strength ${strength(p)}%).`);
-    if (ur.length) L.push(`  Urges this week: ${ur.length}, ridden out ${ur.filter(u=>u.outcome==='rode').length}.`);
+    L.push(`• ${p.name}: ${h} of 7 days free, caught it ${n}, slipped ${s}. ${Math.min(stats(p).held,40)} of 40 days free so far (momentum ${strength(p)}%).`);
+    if (ur.length) L.push(`  Urges this week: ${ur.length}, got through ${ur.filter(u=>u.outcome==='rode').length}.`);
     if (p.truth) L.push(`  The truth I’m choosing: ${p.truth}`);
   }
   if (!ex){
@@ -1144,7 +1144,7 @@ function weekSummary(){
     days.forEach(d => { const m = state.slips[dkey(d)]; if (!m) return;
       for (const id in m){ const p = realPatterns().find(x => x.id === id); if (p && m[id] && m[id].trim()) slips.push(`  – ${fmtShort(d)} (${p.name}): ${m[id].trim()}`); } });
     if (slips.length) L.push('', 'Where I slipped, and what came just before:', ...slips);
-    const q = state.quest; if (q.start && !q.complete) L.push('', `Seven Days Out trial: ${TRIAL.filter((t,i)=>q.done[i]).length} of 7 quests sealed.`);
+    const q = state.quest; if (q.start && !q.complete) L.push('', `7-day challenge: ${TRIAL.filter((t,i)=>q.done[i]).length} of 7 done.`);
     if (state.goals.length){
       const keep = state.goalIdx; L.push('', state.goals.length > 1 ? 'My Sovereign Year goals:' : 'My Sovereign Year:');
       state.goals.forEach((g, i) => { state.goalIdx = i; const n = yearWeek(), w = g.weeks[n] || {};
@@ -1154,7 +1154,7 @@ function weekSummary(){
     }
     const hs = activeHabits();
     if (hs.length){ L.push('', 'Habits I\u2019m building:'); hs.forEach(h => { const c = days.filter(d => state.habitChecks[dkey(d)] && state.habitChecks[dkey(d)][h.id]).length; L.push(`\u2022 ${h.name}: ${c} of 7 days.`); }); }
-    L.push(`Rank: ${RANKS[rankOf(manna())].n} (${manna()} manna).`);
+    L.push(`Level: ${RANKS[rankOf(manna())].n} (${manna()} manna).`);
   }
   if ((state.witness.next||'').trim()) L.push('', `Next week I commit to: ${state.witness.next.trim()}`);
   if ((state.witness.stake||'').trim()) L.push(`If I don’t send you my check-in, I will: ${state.witness.stake.trim()}`);
@@ -1191,19 +1191,19 @@ function renderAccount(){
 function renderWitness(){
   const w = state.witness;
   return `<section class="stack-lg">
-    <div class="stack-sm"><p class="eyebrow">Witness</p><h2>Walk out with someone watching</h2></div>
-    <p class="muted">Choose one person who will ask, not fix. Send them your check-in on a set rhythm. A private intention becomes a covenant once someone else has heard it.</p>
+    <div class="stack-sm"><p class="eyebrow">Accountability partner</p><h2>Change is easier with someone in your corner</h2></div>
+    <p class="muted">Pick one person you trust, who’ll ask how it’s going rather than try to fix you. Send them a quick check-in every day or every week. A promise feels more real once someone else has heard it.</p>
     <div class="stack">
-      <div><label class="lbl" for="wName">My witness</label><input type="text" id="wName" data-bind="wName" placeholder="Their name" value="${esc(w.name)}"></div>
+      <div><label class="lbl" for="wName">My accountability partner</label><input type="text" id="wName" data-bind="wName" placeholder="Their name" value="${esc(w.name)}"></div>
       <div><span class="lbl">I’ll send my check-in</span><div class="seg" role="group" aria-label="Check-in rhythm">${['daily','weekly'].map(r=>`<button type="button" data-act="rhythm" data-v="${r}" aria-pressed="${w.rhythm===r}">${r==='daily'?'Every day':'Every week'}</button>`).join('')}</div></div>
-      <div><label class="lbl" for="wNext">${w.rhythm==='daily'?'Tomorrow':'Next week'} I commit to</label><textarea id="wNext" data-bind="wNext" placeholder="One clear promise your witness can check.">${esc(w.next)}</textarea></div>
-      <div><label class="lbl" for="wStake">If I don’t send my check-in, I will</label><input type="text" id="wStake" data-bind="wStake" placeholder="e.g. give £10 to a cause my witness picks" value="${esc(w.stake)}">
-        <p class="muted small" style="margin-top:6px">Optional. A small stake you’ve promised out loud makes it harder to drift quietly. Your witness holds you to it; the app doesn’t take any money.</p></div>
+      <div><label class="lbl" for="wNext">${w.rhythm==='daily'?'Tomorrow':'Next week'} I commit to</label><textarea id="wNext" data-bind="wNext" placeholder="One clear promise they can check on.">${esc(w.next)}</textarea></div>
+      <div><label class="lbl" for="wStake">If I don’t send my check-in, I will</label><input type="text" id="wStake" data-bind="wStake" placeholder="e.g. give £10 to a cause they pick" value="${esc(w.stake)}">
+        <p class="muted small" style="margin-top:6px">Optional. A small forfeit you’ve agreed out loud makes it harder to quietly give up. Your partner holds you to it; the app doesn’t take any money.</p></div>
     </div>
     <div class="letter">
       <div class="section-head"><p class="eyebrow">This week’s check-in</p><button class="btn" type="button" data-act="copy">Copy to send</button></div>
       <pre id="summary">${esc(weekSummary())}</pre>
-      <p class="muted small">Paste it into a message, WhatsApp or email to your witness.</p>
+      <p class="muted small">Paste it into a text, WhatsApp or email to your partner.</p>
     </div>
     ${renderPush()}
     ${renderReminder()}
@@ -1229,13 +1229,13 @@ function renderUrge(){
   if (!p){ $('#urge').hidden = true; return; }
   let h = `<button class="btn text ov-close" type="button" data-act="urgeClose">Close</button>`;
   if (urge.step === 0){
-    h += `<p class="eyebrow">The pull is here · ${esc(p.name)}</p>
+    h += `<p class="eyebrow">Feeling the urge · ${esc(p.name)}</p>
       <h2 id="urgeTitle">Stop. Breathe first.</h2>
       <div class="breath" aria-hidden="true">Breathe</div>
       <p class="muted">In as the circle grows, out slowly as it shrinks. Three rounds. An urge rises, peaks and passes, usually within minutes. You only have to outlast this one.</p>
       <button class="btn" type="button" data-act="urgeNext">I’ve breathed</button>`;
   } else if (urge.step === 1){
-    h += `<p class="eyebrow">Remember why you left</p><h2 id="urgeTitle">This is what it costs.</h2>
+    h += `<p class="eyebrow">Remember why you’re doing this</p><h2 id="urgeTitle">This is what it costs.</h2>
       <div class="why">
         ${p.cost?`<div><span class="k">What it costs</span>${esc(p.cost)}</div>`:''}
         ${p.identity?`<div><span class="k">Who I am becoming</span>I am someone who ${esc(p.identity)}</div>`:''}
@@ -1248,8 +1248,8 @@ function renderUrge(){
     h += `<p class="eyebrow">Name it</p><h2 id="urgeTitle">What set it off?</h2>
       <div><label class="lbl" for="u-trigger">The trigger</label><input type="text" id="u-trigger" data-bind="urge" data-k="trigger" placeholder="What just happened?" value="${esc(urge.trigger)}"></div>
       ${past.length?`<div class="row">${past.map(t=>`<button type="button" class="pick" data-act="urgePick" data-v="${esc(t)}">${esc(t.length>40?t.slice(0,40)+'…':t)}</button>`).join('')}</div>`:''}
-      <div class="stack-sm"><span class="lbl">How strong is the pull? <span id="u-int">${urge.intensity}</span> of 10</span><input type="range" min="1" max="10" id="u-intensity" data-bind="urgeRange" value="${urge.intensity}" aria-label="Strength of the urge"></div>
-      <div class="two"><button class="btn gold" type="button" data-act="urgeSave" data-v="rode">I rode it out</button><button class="btn ghost" type="button" data-act="urgeSave" data-v="won">It won this time</button></div>`;
+      <div class="stack-sm"><span class="lbl">How strong is the urge? <span id="u-int">${urge.intensity}</span> of 10</span><input type="range" min="1" max="10" id="u-intensity" data-bind="urgeRange" value="${urge.intensity}" aria-label="Strength of the urge"></div>
+      <div class="two"><button class="btn gold" type="button" data-act="urgeSave" data-v="rode">I got through it</button><button class="btn ghost" type="button" data-act="urgeSave" data-v="won">It won this time</button></div>`;
   }
   box.innerHTML = h;
 }
@@ -1276,7 +1276,7 @@ async function readWeek(){
     realPatterns().filter(p=>!p.released).forEach(p => { const v = checkOf(k,p.id); if (v) parts.push(`${p.name}: ${v}`); });
     const sl = state.slips[k]; if (sl) for (const id in sl){ const p = realPatterns().find(x=>x.id===id); if (p && sl[id]) parts.push(`slip note (${p.name}): ${sl[id]}`); }
     const e = state.examens[k]; if (e){ if (e.free) parts.push('walked free: '+e.free); if (e.pulled) parts.push('pulled: '+e.pulled); if (e.grateful) parts.push('grateful: '+e.grateful); }
-    state.urges.filter(u=>u.date===k).forEach(u => parts.push(`urge (${u.intensity}/10, ${u.outcome==='rode'?'ridden out':'it won'}): ${u.trigger||'-'}`));
+    state.urges.filter(u=>u.date===k).forEach(u => parts.push(`urge (${u.intensity}/10, ${u.outcome==='rode'?'got through it':'it won'}): ${u.trigger||'-'}`));
     return `${k}: ${parts.join(' | ') || 'no entries'}`;
   }).join('\n');
   const pats = realPatterns().filter(p=>!p.released).map(p => `- ${p.name}. Belief: ${p.belief||'-'}. Truth chosen: ${p.truth||'-'}.`).join('\n');
@@ -1286,10 +1286,10 @@ async function readWeek(){
 }
 
 function journalText(){
-  const L = ['THE CROSSING · my journal', 'Indigo Estate · exported ' + fmtLong(new Date()), `Rank: ${RANKS[rankOf(manna())].n} (${manna()} manna)`, ''];
+  const L = ['THE CROSSING · my journal', 'Indigo Estate · exported ' + fmtLong(new Date()), `Level: ${RANKS[rankOf(manna())].n} (${manna()} manna)`, ''];
   realPatterns().forEach(p => {
     const st = stats(p);
-    L.push('==== ' + p.name + ' ====', `${STAGES[stageOf(p)].name} · ${st.held} held · ${st.noticed} noticed · ${st.slipped} slipped · hold strength ${strength(p)}%`);
+    L.push('==== ' + p.name + ' ====', `${STAGES[stageOf(p)].name} · ${st.held} free · ${st.noticed} caught · ${st.slipped} slipped · momentum ${strength(p)}%`);
     [['What I do',p.habit],['Trigger',p.trigger],['Belief',p.belief],['The voice',p.voice],['Root',p.rootType?ROOTS[p.rootType].label:''],['First memory',p.rootStory],['What it protected',p.payoff],['What it costs',p.cost],['I am someone who',p.identity],['The truth I choose',p.truth],['When the trigger comes',p.practice]]
       .forEach(([k,v]) => { if (v) L.push(k + ': ' + v); });
     (p.inquiries||[]).forEach(q => { L.push('', `Inquiry ${q.date}: ${q.before}% → ${q.after}%`); [['Is it true',q.isTrue],['Certain',q.certain],['Supports it',q.forEv],['Doesn’t',q.againstEv],['When I believe it',q.react],['Without it',q.without],['Turnaround',q.turn],['Examples',q.examples]].forEach(([k,v]) => { if (v) L.push('  ' + k + ': ' + v); }); });
@@ -1313,9 +1313,9 @@ function journalText(){
     const part = [];
     if (state.intentions[k]) part.push('Intention: ' + state.intentions[k]);
     const e = state.examens[k] || {};
-    if (e.grateful) part.push('Thanks: ' + e.grateful); if (e.free) part.push('Walked free: ' + e.free); if (e.pulled) part.push('Pulled: ' + e.pulled); if (e.tomorrow) part.push('For tomorrow: ' + e.tomorrow);
+    if (e.grateful) part.push('Thanks: ' + e.grateful); if (e.free) part.push('Did well: ' + e.free); if (e.pulled) part.push('Old pattern tugged: ' + e.pulled); if (e.tomorrow) part.push('For tomorrow: ' + e.tomorrow);
     const sl = state.slips[k] || {}; for (const id in sl){ const p = realPatterns().find(x=>x.id===id); if (sl[id]) part.push(`Slip (${p?p.name:'pattern'}): ${sl[id]}`); }
-    state.urges.filter(u=>u.date===k).forEach(u => { const p = realPatterns().find(x=>x.id===u.pid); part.push(`Urge ${u.time||''} (${p?p.name:'pattern'}, ${u.intensity}/10, ${u.outcome==='rode'?'ridden out':'it won'}): ${u.trigger||''}`); });
+    state.urges.filter(u=>u.date===k).forEach(u => { const p = realPatterns().find(x=>x.id===u.pid); part.push(`Urge ${u.time||''} (${p?p.name:'pattern'}, ${u.intensity}/10, ${u.outcome==='rode'?'got through it':'it won'}): ${u.trigger||''}`); });
     if (part.length) L.push('---- ' + fmtLong(fromKey(k)) + ' ----', ...part, '');
   });
   return L.join('\n');
@@ -1325,7 +1325,7 @@ function startTrace(){ draft = blankDraft(); editingId = null; step = 0; stepErr
 function showRelease(p){
   const r = $('#release');
   $('#relName').textContent = p.name;
-  $('#relTruth').textContent = p.truth ? '“' + p.truth + '”' : 'You walked out of the narrow place.';
+  $('#relTruth').textContent = p.truth ? '“' + p.truth + '”' : 'You broke free.';
   r.hidden = false; r.classList.remove('play'); void r.offsetWidth; r.classList.add('play');
 }
 const validEmail = s => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
@@ -1342,13 +1342,13 @@ const acts = {
     if (!Object.keys(m).length) delete state.checks[k];
     save(); render();
     const after = stats(p).held;
-    if (after > before){ const s = STONES.find(x => x.d === after); if (s) queueSeal({kicker:`Waymark · day ${s.d}`, name:s.name, line:s.line, emb:s.emb}); }
+    if (after > before){ const s = STONES.find(x => x.d === after); if (s) queueSeal({kicker:`Milestone · day ${s.d}`, name:s.name, line:s.line, emb:s.emb}); }
   },
-  pledge(){ const n = new Date(); state.pledges[todayKey()] = pad(n.getHours())+':'+pad(n.getMinutes()); save(); render(); toast('Pledged. One day at a time. +1 manna'); },
-  dare(){ state.dares[todayKey()] = true; save(); render(); toast('Dare done. +5 manna'); },
-  trialStart(){ state.quest = {start:todayKey(), done:{}, complete:null, trials:state.quest.trials||0}; save(); render(); toast('The trial has begun. Quest one is open.'); },
+  pledge(){ const n = new Date(); state.pledges[todayKey()] = pad(n.getHours())+':'+pad(n.getMinutes()); save(); render(); toast('Promise made. One day at a time. +1 point'); },
+  dare(){ state.dares[todayKey()] = true; save(); render(); toast('Dare done. +5 points'); },
+  trialStart(){ state.quest = {start:todayKey(), done:{}, complete:null, trials:state.quest.trials||0}; save(); render(); toast('Challenge started. Day one is open.'); },
   trialAbandon(b){ if (b.dataset.sure){ state.quest.start = null; state.quest.done = {}; save(); render(); } else { b.dataset.sure = '1'; b.textContent = 'Tap again to start over'; } },
-  questDone(b){ const i = +b.dataset.i; state.quest.done[i] = todayKey(); save(); render(); toast(`Quest sealed: ${TRIAL[i].t}. +10 manna`); },
+  questDone(b){ const i = +b.dataset.i; state.quest.done[i] = todayKey(); save(); render(); toast(`Done: ${TRIAL[i].t}. +10 points`); },
   urgeOpen(b){ urge = {pid:b.dataset.id, step:0, trigger:'', intensity:5}; $('#urge').hidden = false; renderUrge(); },
   urgeNext(){ urge.step++; renderUrge(); },
   urgeClose(){ urge = null; $('#urge').hidden = true; },
@@ -1358,7 +1358,7 @@ const acts = {
     state.urges.push({id:newId(), pid:urge.pid, date:k, time:pad(n.getHours())+':'+pad(n.getMinutes()), hour:n.getHours(), trigger:urge.trigger.trim(), intensity:urge.intensity, outcome:b.dataset.v});
     if (b.dataset.v === 'won'){ (state.checks[k] || (state.checks[k] = {}))[urge.pid] = 'slipped'; }
     save(); urge = null; $('#urge').hidden = true; render();
-    toast(b.dataset.v === 'rode' ? 'You rode it out. That is the wilderness doing its work. +5 manna' : 'Logged as a slip. Tell yourself the truth, then begin again.', 4000);
+    toast(b.dataset.v === 'rode' ? 'You got through it. That’s how the new way gets stronger. +5 points' : 'Logged as a slip. Be honest with yourself, then start again.', 4000);
   },
   newTrace(){ startTrace(); if (view() === 'trace') render(); },
   edit(b){ const p = realPatterns().find(x => x.id === b.dataset.id); if (!p) return;
@@ -1377,7 +1377,7 @@ const acts = {
     if (editingId){ const p = realPatterns().find(x => x.id === editingId); if (p) fields.forEach(f => p[f] = (draft[f]||'').trim()); }
     else { id = newId(); const p = {id, created: todayKey(), released:false, inquiries:[]}; fields.forEach(f => p[f] = (draft[f]||'').trim()); state.patterns.push(p); }
     save(); draft = null; editingId = null; expanded = id;
-    toast('Covenant sealed'); location.hash = 'patterns';
+    toast('Pattern saved'); location.hash = 'patterns';
   },
   inqStart(b){ inq = {pid:b.dataset.id, step:0, data:{before:70, after:70}}; location.hash = 'question'; if (view()==='question') render(); },
   inqPick(b){ inq.data[b.dataset.k] = b.dataset.v; render(); },
@@ -1387,7 +1387,7 @@ const acts = {
   inqSave(){
     const p = realPatterns().find(x => x.id === inq.pid);
     if (p){ const d = inq.data; (p.inquiries || (p.inquiries = [])).push({date:todayKey(), before:+d.before, after:+d.after, isTrue:d.isTrue||'', certain:d.certain||'', forEv:(d.forEv||'').trim(), againstEv:(d.againstEv||'').trim(), react:(d.react||'').trim(), without:(d.without||'').trim(), turn:(d.turn||'').trim(), examples:(d.examples||'').trim()}); save(); expanded = p.id;
-      const drop = d.before - d.after; toast(drop > 0 ? `The belief loosened by ${drop} points. +8 manna` : 'Kept. Come back to it; beliefs loosen over time. +8 manna', 3600); }
+      const drop = d.before - d.after; toast(drop > 0 ? `The belief loosened by ${drop} points. +8 points` : 'Kept. Come back to it; beliefs loosen over time. +8 points', 3600); }
     inq = null; location.hash = 'patterns';
   },
   toggle(b){ expanded = expanded === b.dataset.id ? '' : b.dataset.id; render(); },
@@ -1418,13 +1418,13 @@ const acts = {
     } else {
       state.goals.push({id:newId(), identity:d.identity.trim(), goal:d.goal.trim(), why:d.why.trim(), fromPattern:d.fromPattern, seasons:d.seasons.map(s => s.trim()), letter:d.letter.trim(), start:todayKey(), weeks:{1:{step:d.firstStep.trim()}}, milestones:{}, measure:measureFrom(d)});
       state.goalIdx = state.goals.length - 1;
-      queueSeal({kicker:'Week 1 of 52', name: state.goals.length > 1 ? d.goal.trim() : 'Your Sovereign Year', line:'The ground is cleared. Now you build, one small step a week.', emb:'sunrise'});
+      queueSeal({kicker:'Week 1 of 52', name: state.goals.length > 1 ? d.goal.trim() : 'Your Sovereign Year', line:'You’re set. Now you build it, one small step a week.', emb:'sunrise'});
     }
     save(); ydraft = null; yr = {}; yEditing = false; location.hash = 'future';
   },
   yEdit(){ const y = G(); yEditing = true; const m = y.measure; ydraft = {identity:y.identity, goal:y.goal, why:y.why, fromPattern:y.fromPattern||'', seasons:[...y.seasons], letter:y.letter, firstStep:'', mType: m ? 'number' : 'steps', mUnit: m ? m.unit : '', mStart: m ? String(m.start) : '', mTarget: m ? String(m.target) : ''}; ystep = 0; yErr = ''; location.hash = 'yearsetup'; },
   ySetStep(){ const s = stepNow.trim(); if (!s){ toast('Write one small step first.'); return; } weekRec(yearWeek()).step = s; stepNow = ''; save(); render(); },
-  yStepDone(){ weekRec(yearWeek()).done = 'yes'; save(); render(); toast('Step done. +10 manna'); },
+  yStepDone(){ weekRec(yearWeek()).done = 'yes'; save(); render(); toast('Step done. +10 points'); },
   yStepUndo(){ delete weekRec(yearWeek()).done; save(); render(); },
   yHow(b){ yr.how = b.dataset.v; render(); },
   yPid(b){ yr.pid = yr.pid === b.dataset.v ? '' : b.dataset.v; render(); },
@@ -1440,7 +1440,7 @@ const acts = {
     if (n < 52){ const nx = weekRec(n + 1); nx.step = yr.next.trim(); }
     blockedPrompt = w.review.pid ? realPatterns().find(p => p.id === w.review.pid) || null : null;
     reviewOpen = false; yearMirror = null; save(); render();
-    toast(n < 52 ? `Week ${n} closed. Week ${n+1} is set. +5 manna` : 'Your final week is closed.');
+    toast(n < 52 ? `Week ${n} closed. Week ${n+1} is set. +5 points` : 'Your final week is closed.');
   },
   async yMirror(){
     if (!mirrorOn()) return;
@@ -1455,7 +1455,7 @@ const acts = {
     yearBusy = false; render();
   },
   yMilestone(b){ const y = G(); y.milestones = y.milestones || {}; const i = +b.dataset.i; y.milestones[i] = todayKey(); save(); render();
-    queueSeal({kicker:`${SEASONS[i].name} milestone`, name:y.seasons[i], line:'A season’s harvest, gathered. +20 manna', emb:SEASONS[i].emb}); },
+    queueSeal({kicker:`${SEASONS[i].name} milestone`, name:y.seasons[i], line:'A season’s harvest, gathered. +20 points', emb:SEASONS[i].emb}); },
   yEndArm(){ yearEndArmed = true; render(); },
   yEndNo(){ yearEndArmed = false; render(); },
   yEnd(){ state.goals.splice(state.goalIdx, 1); state.goalIdx = 0; yr = {}; yearEndArmed = false; save(); render(); toast('That goal has been cleared.'); },
@@ -1550,7 +1550,7 @@ const acts = {
   copy(){
     const text = weekSummary();
     const fallback = () => { const r = document.createRange(); r.selectNodeContents($('#summary')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Selected. Press copy on your device.'); };
-    try { navigator.clipboard.writeText(text).then(() => toast('Copied. Paste it to your witness.'), fallback); } catch(e){ fallback(); }
+    try { navigator.clipboard.writeText(text).then(() => toast('Copied. Paste it to your partner.'), fallback); } catch(e){ fallback(); }
   },
   async export(){
     const blob = new Blob([journalText()], {type:'text/plain;charset=utf-8'});

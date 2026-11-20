@@ -25,7 +25,7 @@ export function halfHour(hour: number, minute: number): string {
 
 /** The words on the notification. Never includes anything from the journal. */
 export function message(kind: Kind, appUrl: string, d: { year: number; month: number; day: number }) {
-  if (kind === "morning") return { title: "Today you walk out", body: `Make your pledge and check in. Today’s dare: ${dareForDay(dayNumber(d.year, d.month, d.day))}`, url: `${appUrl}/#today`, tag: "morning" };
-  if (kind === "evening") return { title: "Close the day", body: "Check in on your pattern and answer the evening examen. Where did you walk free today?", url: `${appUrl}/#today`, tag: "evening" };
+  if (kind === "morning") return { title: "Good morning", body: `Make your promise for today and check in. Today’s dare: ${dareForDay(dayNumber(d.year, d.month, d.day))}`, url: `${appUrl}/#today`, tag: "morning" };
+  if (kind === "evening") return { title: "How did today go?", body: "Check in on your pattern and do your evening reflection. Where did you do well today?", url: `${appUrl}/#today`, tag: "evening" };
   return { title: "Close your week", body: "It’s Sunday. Review this week’s step and set the next one.", url: `${appUrl}/#future`, tag: "sunday" };
 }
