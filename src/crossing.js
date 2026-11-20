@@ -893,6 +893,7 @@ function renderPlus(){
       <div class="stack-sm"><p class="eyebrow">Crossing Plus</p><h2>You have Crossing Plus</h2></div>
       <div class="rank"><span class="emb-badge">${emb('crown')}</span><div class="stack-sm">
         <p class="title">Plus</p>
+        ${plusInfo.admin ? '<p class="small"><b>Owner account.</b> You have Plus and the owner dashboard.</p>' : ''}
         <p class="muted small">${plusInfo.admin && !plusInfo.hasCustomer ? 'Included with your owner account.' : plusInfo.member && !(plusInfo.hasCustomer && plusInfo.status === 'active') ? 'Included with your Indigo Estate membership.' : plusInfo.cancelAtPeriodEnd ? `Ends on ${end}. You keep everything until then.` : end ? `Renews on ${end}.` : 'Active.'}</p>
       </div></div>
       <ul class="gate-points">${benefits.map(([e,t,l]) => `<li>${emb(e)}<span><b>${t}.</b> ${l}</span></li>`).join('')}</ul>
