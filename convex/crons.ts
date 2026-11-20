@@ -6,4 +6,6 @@ const crons = cronJobs();
 crons.cron("daily reminders", "0,30 * * * *", internal.reminders.tick, {});
 // Sundays 18:00 UK time: "close your week" for members with a Sovereign Year.
 crons.cron("sunday review emails", "0,30 * * * *", internal.reminders.sunday, {});
+// Phone notifications at the times each member chose (UK time).
+crons.cron("phone notifications", "0,30 * * * *", internal.pushNode.tick, {});
 export default crons;

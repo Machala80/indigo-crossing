@@ -13,6 +13,9 @@ import type * as journal from "../journal.js";
 import type * as londonTime from "../londonTime.js";
 import type * as mirror from "../mirror.js";
 import type * as plus from "../plus.js";
+import type * as push from "../push.js";
+import type * as pushNode from "../pushNode.js";
+import type * as pushPlan from "../pushPlan.js";
 import type * as reminders from "../reminders.js";
 import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
 
@@ -28,6 +31,9 @@ declare const fullApi: ApiFromModules<{
   londonTime: typeof londonTime;
   mirror: typeof mirror;
   plus: typeof plus;
+  push: typeof push;
+  pushNode: typeof pushNode;
+  pushPlan: typeof pushPlan;
   reminders: typeof reminders;
 }>;
 export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;

@@ -50,6 +50,13 @@ function Running() {
           portal: () => client.action(api.billing.portal, {}),
           confirmCheckout: (sessionId: string) => client.action(api.billing.confirm, { sessionId }),
           adminStats: () => client.query(api.admin.stats, {}),
+          pushPublicKey: () => client.query(api.push.publicKey, {}),
+          pushMine: (endpoint: string) => client.query(api.push.mine, { endpoint }),
+          pushSubscribe: (a: { endpoint: string; p256dh: string; auth: string; morning?: string; evening?: string; sunday: boolean }) =>
+            client.mutation(api.push.subscribe, a),
+          pushUpdate: (a: { endpoint: string; morning?: string; evening?: string; sunday: boolean }) => client.mutation(api.push.updatePrefs, a),
+          pushUnsubscribe: (endpoint: string) => client.mutation(api.push.unsubscribe, { endpoint }),
+          pushTest: () => client.action(api.pushNode.test, {}),
           save: (data: string) => client.mutation(api.journal.save, { data }),
           setReminder: (email: string, slot: "morning" | "evening", consent: string) =>
             client.mutation(api.reminders.set, { email, slot, consent }),

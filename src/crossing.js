@@ -370,6 +370,7 @@ function renderToday(){
       <div><label class="lbl" for="intention">Morning intention</label>
       <input type="text" id="intention" data-bind="intention" placeholder="Today I will walk as someone who…" value="${esc(state.intentions[k]||'')}"></div>
       <a class="dare-mini" href="#quest"><span class="emb-badge">${emb('flame')}</span><p><span class="eyebrow">Today’s dare${dareDone?' · done':''}</span><br>${esc(todaysDare())}</p></a>
+      ${renderNudge()}
     </div>
     ${slippedYesterday.length ? `<p class="notice"><b>Never twice.</b> Yesterday ${esc(slippedYesterday.map(p=>p.name).join(' and '))} ran you. One slip is a stumble; two in a row starts a road back. Today matters more than yesterday.</p>` : ''}
     ${ex ? `<div class="empty">${emb('gate')}<p class="eyebrow">Begin here</p><h3>You haven’t traced a pattern yet.</h3><p class="muted small">Below is an example of a traced pattern once you’re checking in each day. Trace your own and it takes the example’s place.</p><a class="btn gold" href="#trace" data-act="newTrace">Trace your first pattern</a></div>` : ''}
@@ -1055,6 +1056,68 @@ function renderHabits(){
   </div>`;
 }
 
+/* ---------- Phone notifications ---------- */
+const MORNING_TIMES = ['06:30','07:00','07:30','08:00','08:30','09:00'];
+const EVENING_TIMES = ['19:00','19:30','20:00','20:30','21:00','21:30','22:00'];
+const clock = t => { const [h, m] = t.split(':').map(Number); return `${h % 12 || 12}${m ? ':' + String(m).padStart(2,'0') : ''}${h < 12 ? 'am' : 'pm'}`; };
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = () => (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+let push = {state:'checking', endpoint:'', prefs:{morning:'07:30', evening:'21:00', sunday:true}, busy:'', err:'', msg:''};
+let nudgeHidden = false; try { nudgeHidden = localStorage.getItem('crossing-push-nudge') === 'hidden'; } catch(e){}
+function b64ToU8(s){ const pad = '='.repeat((4 - s.length % 4) % 4); const raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(raw, c => c.charCodeAt(0)); }
+const prefArgs = () => { const o = {sunday: !!push.prefs.sunday}; if (push.prefs.morning) o.morning = push.prefs.morning; if (push.prefs.evening) o.evening = push.prefs.evening; return o; };
+
+async function pushInit(){
+  try {
+    if (!pushSupported()){ push.state = isIOS && !isStandalone() ? 'ios-install' : 'unsupported'; return; }
+    if (Notification.permission === 'denied'){ push.state = 'denied'; return; }
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    if (sub){
+      push.endpoint = sub.endpoint;
+      const p = await api.pushMine(sub.endpoint);
+      if (p){ push.state = 'on'; push.prefs = {morning:p.morning || '', evening:p.evening || '', sunday:p.sunday}; return; }
+    }
+    push.state = 'off';
+  } catch(e){ push.state = 'off'; }
+}
+pushInit().then(() => { if (['today','witness'].includes(view())) render(); });
+
+function renderNudge(){
+  if (nudgeHidden || !['off','ios-install'].includes(push.state)) return '';
+  return `<div class="nudge">
+    <span class="emb-badge">${emb('lamp')}</span>
+    <p><b>Get your reminders on your phone.</b> A gentle nudge for your pledge, your examen and your Sunday review.</p>
+    <div class="row"><a class="btn small" href="#witness">Set it up</a><button class="btn text" type="button" data-act="nudgeHide">Not now</button></div>
+  </div>`;
+}
+
+function renderPush(){
+  let body = '';
+  if (push.state === 'checking') body = `<p class="muted small">Checking this device…</p>`;
+  else if (push.state === 'ios-install') body = `<p>On iPhone and iPad, notifications only work once The Crossing is on your home screen:</p>
+    <ol class="small steps"><li>Tap the <b>Share</b> button in Safari (the square with an arrow).</li><li>Choose <b>Add to Home Screen</b>, then <b>Add</b>.</li><li>Open The Crossing from its new icon, come back to this page, and tap <b>Turn on notifications</b>.</li></ol>
+    <p class="muted small">Needs iOS 16.4 or later.</p>`;
+  else if (push.state === 'unsupported') body = `<p class="muted small">This browser can’t show notifications. Try Chrome, Edge or Firefox, or on iPhone add The Crossing to your home screen first. The daily email reminder works everywhere.</p>`;
+  else if (push.state === 'denied') body = `<p>Notifications are blocked for this site on this device.</p><p class="muted small">To allow them: open your browser’s site settings for crossing.indigoestate.co.uk (usually the padlock or “i” icon next to the address), set <b>Notifications</b> to <b>Allow</b>, then reload this page. On Android you may also need to allow notifications for your browser in the phone’s Settings.</p>`;
+  else {
+    const on = push.state === 'on';
+    const sel = (id, list, val, label) => `<div><label class="lbl" for="${id}">${label}</label><select id="${id}" data-bind="pushPref" data-k="${id === 'pn-m' ? 'morning' : 'evening'}"><option value="">Off</option>${list.map(t => `<option value="${t}"${t === val ? ' selected' : ''}>${clock(t)}</option>`).join('')}</select></div>`;
+    body = `<div class="two">${sel('pn-m', MORNING_TIMES, push.prefs.morning, 'Morning pledge')}${sel('pn-e', EVENING_TIMES, push.prefs.evening, 'Evening examen')}</div>
+      <label class="check"><input type="checkbox" id="pn-s" data-bind="pushPref" data-k="sunday"${push.prefs.sunday ? ' checked' : ''}> <span>Sunday 6pm: close your week (only if you have a Sovereign Year goal)</span></label>
+      <div class="row">${on
+        ? `<button class="btn ghost small" type="button" data-act="pushTest"${push.busy?' disabled':''}>${push.busy==='test'?'Sending…':'Send me a test'}</button><button class="btn text" type="button" data-act="pushOff"${push.busy?' disabled':''}>Turn off on this device</button>`
+        : `<button class="btn gold" type="button" data-act="pushOn"${push.busy?' disabled':''}>${push.busy==='on'?'Turning on…':'Turn on notifications'}</button>`}</div>
+      <p class="muted small">${on ? 'On for this device. Changes save as you make them. ' : ''}Notifications only ever say it’s time to check in; nothing you’ve written appears on your lock screen.</p>`;
+  }
+  return `<div class="panel" id="notifications">
+    <div class="row">${emb('lamp')}<div class="stack-sm" style="gap:2px"><p class="eyebrow">Phone notifications</p><p class="muted small">Reminders that pop up on this device, like any other app.</p></div></div>
+    ${body}
+    ${push.err?`<p class="err" role="alert">${esc(push.err)}</p>`:''}${push.msg?`<p class="ok">${esc(push.msg)}</p>`:''}
+  </div>`;
+}
+
 function weekSummary(){
   // Only fall back to the example when there's nothing of the member's own to report.
   const ex = showingExample() && !state.goals.length && !activeHabits().length;
@@ -1142,6 +1205,7 @@ function renderWitness(){
       <pre id="summary">${esc(weekSummary())}</pre>
       <p class="muted small">Paste it into a message, WhatsApp or email to your witness.</p>
     </div>
+    ${renderPush()}
     ${renderReminder()}
     ${renderAccount()}
   </section>`;
@@ -1435,6 +1499,43 @@ const acts = {
   hRemoveArm(b){ habitDelArmed = b.dataset.id; render(); },
   hRemoveNo(){ habitDelArmed = null; render(); },
   hRemove(b){ const h = state.habits.find(x => x.id === b.dataset.id); if (h) h.archived = true; habitDelArmed = null; save(); render(); toast('Habit removed. Its history is kept in your journal.'); },
+  async pushOn(){
+    push.err = ''; push.msg = ''; push.busy = 'on'; render();
+    try {
+      // Ask permission first, straight from the tap: iPhone refuses if anything else comes before it.
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted'){ push.state = perm === 'denied' ? 'denied' : 'off'; push.busy = ''; render(); return; }
+      const key = await api.pushPublicKey();
+      if (!key) throw new Error('Phone notifications aren’t switched on for The Crossing yet. Please try again later.');
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64ToU8(key)});
+      const j = sub.toJSON();
+      await api.pushSubscribe(Object.assign({endpoint:j.endpoint, p256dh:j.keys.p256dh, auth:j.keys.auth}, prefArgs()));
+      push.endpoint = j.endpoint; push.state = 'on'; push.msg = 'Notifications are on for this device.';
+      nudgeHidden = true;
+    } catch(e){ push.err = errText(e, (e && e.message) || 'Notifications couldn’t be turned on. Try again in a moment.'); }
+    push.busy = ''; render();
+  },
+  async pushOff(){
+    push.err = ''; push.msg = ''; push.busy = 'off'; render();
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg && await reg.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+      if (push.endpoint) await api.pushUnsubscribe(push.endpoint);
+      push.state = 'off'; push.msg = 'Notifications are off for this device.';
+    } catch(e){ push.err = errText(e, 'That didn’t go through. Try again in a moment.'); }
+    push.busy = ''; render();
+  },
+  async pushTest(){
+    push.err = ''; push.msg = ''; push.busy = 'test'; render();
+    try { const n = await api.pushTest(); push.msg = n ? 'Sent. It should arrive within a few seconds.' : 'We couldn’t reach this device. Turn notifications off and on again.'; }
+    catch(e){ push.err = errText(e, 'The test didn’t send. Try again in a moment.'); }
+    push.busy = ''; render();
+  },
+  nudgeHide(){ nudgeHidden = true; try { localStorage.setItem('crossing-push-nudge', 'hidden'); } catch(e){} render(); },
   closeRelease(){ $('#release').hidden = true; },
   closeSeal(){ nextSeal(); },
   delAsk(b){ confirmDel = b.dataset.id; render(); },
@@ -1506,6 +1607,13 @@ document.addEventListener('input', e => {
   else if (bind === 'yr'){ yr[t.dataset.k] = t.value; }
   else if (bind === 'ystepnow'){ stepNow = t.value; }
   else if (bind === 'yfig'){ figureDraft = t.value; }
+  else if (bind === 'pushPref'){
+    push.prefs[t.dataset.k] = t.type === 'checkbox' ? t.checked : t.value;
+    if (push.state === 'on' && push.endpoint){
+      clearTimeout(push._t);
+      push._t = setTimeout(() => { api.pushUpdate(Object.assign({endpoint:push.endpoint}, prefArgs())).then(() => toast('Notification times saved')).catch(e => { push.err = errText(e, 'That didn\u2019t save. Try again.'); render(); }); }, 400);
+    }
+  }
   else if (bind === 'habit'){ habitDraft[t.dataset.k] = t.value; }
   else if (bind === 'remConsent'){ remConsent = t.checked; }
   else if (bind === 'urgeRange'){ urge.intensity = +t.value; const o = $('#u-int'); if (o) o.textContent = t.value; }

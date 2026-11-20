@@ -47,6 +47,7 @@ export const deleteAccount = mutation({
     if (sub) await ctx.db.delete(sub._id);
     for (const j of await ctx.db.query("journals").withIndex("by_user", (q) => q.eq("userId", userId)).collect()) await ctx.db.delete(j._id);
     for (const r of await ctx.db.query("reminders").withIndex("by_user", (q) => q.eq("userId", userId)).collect()) await ctx.db.delete(r._id);
+    for (const d of await ctx.db.query("pushSubs").withIndex("by_user", (q) => q.eq("userId", userId)).collect()) await ctx.db.delete(d._id);
     for (const m of await ctx.db.query("mirrorUsage").withIndex("by_user_day", (q) => q.eq("userId", userId)).collect()) await ctx.db.delete(m._id);
     for (const s of await ctx.db.query("authSessions").withIndex("userId", (q) => q.eq("userId", userId)).collect()) {
       for (const t of await ctx.db.query("authRefreshTokens").withIndex("sessionId", (q) => q.eq("sessionId", s._id)).collect()) await ctx.db.delete(t._id);

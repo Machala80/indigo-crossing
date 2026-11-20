@@ -521,3 +521,11 @@ a.ppf > *:hover, .ppf a:hover{border-color:var(--am)}
   .habit .hdel,.habit .confirm{grid-column:2}
   .goaltab{max-width:100%}
 }
+
+/* ---------- Phone notifications ---------- */
+select{width:100%;font-family:var(--f-body);font-size:1rem;color:var(--ink-body);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+select:focus{outline:none;border-color:var(--am);box-shadow:0 0 0 3px var(--am-soft)}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.nudge{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;align-items:center;border:1px solid var(--gold);border-radius:16px;padding:14px 16px;background:linear-gradient(135deg, var(--gold-soft), var(--surface) 70%)}
+.nudge p{font-size:.95rem}
+.nudge .row{grid-column:2}

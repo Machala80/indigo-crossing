@@ -42,6 +42,21 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_customer", ["stripeCustomerId"]),
 
+  // Phone notifications: one row per device that has switched them on.
+  pushSubs: defineTable({
+    userId: v.id("users"),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    morning: v.optional(v.string()), // "07:30" etc, or absent for off
+    evening: v.optional(v.string()),
+    sunday: v.boolean(),
+    sent: v.optional(v.record(v.string(), v.string())), // kind -> last date sent
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_endpoint", ["endpoint"]),
+
   // How many Mirror reflections each member used per day (cost control).
   mirrorUsage: defineTable({
     userId: v.id("users"),

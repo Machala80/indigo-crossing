@@ -264,3 +264,51 @@ describe("Phase 2 data on the server", () => {
     delete process.env.ADMIN_EMAILS;
   });
 });
+
+import { dueKinds, halfHour, message } from "./pushPlan";
+describe("phone notifications", () => {
+  test("sends at the chosen times, once a day, Sundays only for the review", () => {
+    const sub = { morning: "07:30", evening: "21:00", sunday: true, sent: {} as Record<string, string> };
+    expect(dueKinds(sub, "07:30", 3, "2026-11-18")).toEqual(["morning"]);
+    expect(dueKinds(sub, "21:00", 3, "2026-11-18")).toEqual(["evening"]);
+    expect(dueKinds(sub, "18:00", 3, "2026-11-18")).toEqual([]);
+    expect(dueKinds(sub, "18:00", 0, "2026-11-22")).toEqual(["sunday"]);
+    expect(dueKinds({ ...sub, sent: { morning: "2026-11-18" } }, "07:30", 3, "2026-11-18")).toEqual([]);
+    expect(dueKinds({ sunday: false }, "07:30", 0, "2026-11-22")).toEqual([]);
+    expect(halfHour(7, 31)).toBe("07:30");
+    expect(halfHour(21, 4)).toBe("21:00");
+    const m = message("morning", "https://x", { year: 2026, month: 11, day: 20 });
+    expect(m.url).toBe("https://x/#today");
+    expect(m.body).toMatch(/dare/);
+  });
+
+  test("devices are private, settings are checked, and deleting the account removes them", async () => {
+    const t = convexTest(schema, modules);
+    const a = await member(t, "a@example.com");
+    const b = await member(t, "b@example.com");
+    const dev = { endpoint: "https://push.example/abc", p256dh: "k", auth: "x", morning: "07:30", evening: "21:00", sunday: true };
+    await expect(a.as.mutation(api.push.subscribe, { ...dev, endpoint: "http://insecure" })).rejects.toThrow(/can't use/);
+    await expect(a.as.mutation(api.push.subscribe, { ...dev, morning: "03:00" })).rejects.toThrow(/morning time/);
+    await a.as.mutation(api.push.subscribe, dev);
+    expect(await a.as.query(api.push.mine, { endpoint: dev.endpoint })).toEqual({ morning: "07:30", evening: "21:00", sunday: true });
+    expect(await b.as.query(api.push.mine, { endpoint: dev.endpoint })).toBeNull();
+    await expect(b.as.mutation(api.push.updatePrefs, { endpoint: dev.endpoint, sunday: false })).rejects.toThrow(/aren't on/);
+    await b.as.mutation(api.push.unsubscribe, { endpoint: dev.endpoint });
+    expect(await a.as.query(api.push.mine, { endpoint: dev.endpoint })).not.toBeNull();
+    await a.as.mutation(api.push.updatePrefs, { endpoint: dev.endpoint, evening: "20:00", sunday: true });
+    expect((await a.as.query(api.push.mine, { endpoint: dev.endpoint }))!.morning).toBeNull();
+
+    // Sunday is only sent to members who have a goal.
+    let all = await t.query(internal.push.all, {});
+    expect(all[0].sunday).toBe(false);
+    await a.as.mutation(api.journal.save, { data: JSON.stringify({ goals: [{ goal: "x", start: "2026-11-01" }] }) });
+    all = await t.query(internal.push.all, {});
+    expect(all[0].sunday).toBe(true);
+
+    for (let i = 0; i < 6; i++) await a.as.mutation(api.push.subscribe, { ...dev, endpoint: `https://push.example/d${i}` });
+    expect((await t.query(internal.push.forUser, { userId: a.userId })).length).toBe(5);
+
+    await a.as.mutation(api.journal.deleteAccount, { confirm: "DELETE" });
+    expect(await t.run((ctx) => ctx.db.query("pushSubs").collect())).toHaveLength(0);
+  });
+});

@@ -50,6 +50,9 @@ In the [Convex dashboard](https://dashboard.convex.dev), open **indigo-crossing 
    | `BREVO_SENDER_NAME` | `Indigo Estate` |
    | `ANTHROPIC_API_KEY` | *(optional)* turns on the Mirror |
    | `MIRROR_DAILY_LIMIT` | *(optional)* reflections per member per day, default `12` |
+   | `VAPID_PUBLIC_KEY` | phone notifications: from `npx web-push generate-vapid-keys` (never change once live) |
+   | `VAPID_PRIVATE_KEY` | the matching private key |
+   | `VAPID_SUBJECT` | `mailto:enquiries@indigoestate.co.uk` |
    | `ADMIN_EMAILS` | your email(s), comma-separated: gives you Plus and the owner dashboard |
    | `STRIPE_SECRET_KEY` | Stripe → Developers → API keys (a restricted key is fine, see below) |
    | `STRIPE_PRICE_MONTHLY` | the `price_…` ID of the £4.99 monthly price |
@@ -74,6 +77,8 @@ In the [Convex dashboard](https://dashboard.convex.dev), open **indigo-crossing 
 5. **Indigo members get Plus free:** Product catalogue → Coupons → New: 100% off, duration *Forever*, with a promotion code such as `INDIGOMEMBER`. Share the code in the members' area.
 
 **Free vs Plus.** Free: one active pattern, Today, the pull is here, examen, Quest, Witness, reminders, download and delete. Plus: unlimited patterns, Question the belief, the Future (Sovereign Year) and the Mirror. The Mirror is also enforced on the server, as it costs money per use.
+
+**Phone notifications:** Witness → Phone notifications. Android: works in Chrome straight away. iPhone/iPad (iOS 16.4+): Safari → Share → Add to Home Screen first, then open from the icon. Times are London time, checked every half hour; Sunday 6pm only for members with a Sovereign Year goal. Messages are generic and never include journal text.
 
 **Owner dashboard:** signed in with an `ADMIN_EMAILS` address, go to Witness → Your account → Owner dashboard. It shows counts only, never journals or emails.
 

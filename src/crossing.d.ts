@@ -9,6 +9,12 @@ export interface CrossingApi {
   portal(): Promise<string>;
   confirmCheckout(sessionId: string): Promise<boolean>;
   adminStats(): Promise<unknown>;
+  pushPublicKey(): Promise<string | null>;
+  pushMine(endpoint: string): Promise<{ morning: string | null; evening: string | null; sunday: boolean } | null>;
+  pushSubscribe(a: { endpoint: string; p256dh: string; auth: string; morning?: string; evening?: string; sunday: boolean }): Promise<unknown>;
+  pushUpdate(a: { endpoint: string; morning?: string; evening?: string; sunday: boolean }): Promise<unknown>;
+  pushUnsubscribe(endpoint: string): Promise<unknown>;
+  pushTest(): Promise<number>;
   save(data: string): Promise<unknown>;
   setReminder(email: string, slot: "morning" | "evening", consent: string): Promise<unknown>;
   stopReminder(): Promise<unknown>;
