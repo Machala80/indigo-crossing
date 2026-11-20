@@ -532,3 +532,9 @@ select:focus{outline:none;border-color:var(--am);box-shadow:0 0 0 3px var(--am-s
 
 /* iPhone home-screen app: make sure fields always take a tap and bring up the keyboard */
 input,textarea,select{-webkit-user-select:text;user-select:text;touch-action:manipulation}
+
+/* Owner: members list */
+.mlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.mlist li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}
+.mlist .me{flex:1 1 180px;min-width:0;overflow-wrap:anywhere;font-size:.95rem}
+#members textarea{min-height:90px}

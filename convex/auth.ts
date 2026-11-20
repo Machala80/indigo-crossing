@@ -27,10 +27,34 @@ const ResetCode = Email({
   },
 });
 
+// Email confirmation: one 8-digit code the first time someone signs up or signs in.
+const VerifyCode = Email({
+  id: "brevo-verify",
+  maxAge: 60 * 30,
+  async generateVerificationToken() {
+    const a = new Uint32Array(1);
+    crypto.getRandomValues(a);
+    return String(a[0] % 100000000).padStart(8, "0");
+  },
+  async sendVerificationRequest({ identifier: email, token }) {
+    await sendBrevo({
+      to: email,
+      subject: "Confirm your email for The Crossing",
+      text: `Your code to confirm your email for The Crossing is ${token}. It works for 30 minutes. If you didn't try to sign up, you can ignore this email.`,
+      html: emailHtml("Confirm your email", [
+        "Here is your code to confirm your email for The Crossing:",
+        token,
+        "It works for 30 minutes. If you didn't try to sign up, you can ignore this email.",
+      ]),
+    });
+  },
+});
+
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Password({
       reset: ResetCode,
+      verify: VerifyCode,
       profile(params) {
         const email = String(params.email ?? "").trim().toLowerCase();
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {

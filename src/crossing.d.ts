@@ -9,6 +9,9 @@ export interface CrossingApi {
   portal(): Promise<string>;
   confirmCheckout(sessionId: string): Promise<boolean>;
   adminStats(): Promise<unknown>;
+  membersList(): Promise<{ email: string; addedAt: number; joined: boolean }[]>;
+  membersAdd(text: string): Promise<{ added: number; already: number; invalid: string[] }>;
+  membersRemove(email: string): Promise<null>;
   pushPublicKey(): Promise<string | null>;
   pushMine(endpoint: string): Promise<{ morning: string | null; evening: string | null; sunday: boolean } | null>;
   pushSubscribe(a: { endpoint: string; p256dh: string; auth: string; morning?: string; evening?: string; sunday: boolean }): Promise<unknown>;

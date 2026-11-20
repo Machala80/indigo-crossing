@@ -11,6 +11,7 @@ import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as journal from "../journal.js";
 import type * as londonTime from "../londonTime.js";
+import type * as members from "../members.js";
 import type * as mirror from "../mirror.js";
 import type * as plus from "../plus.js";
 import type * as push from "../push.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   journal: typeof journal;
   londonTime: typeof londonTime;
+  members: typeof members;
   mirror: typeof mirror;
   plus: typeof plus;
   push: typeof push;

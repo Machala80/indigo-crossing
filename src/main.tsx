@@ -50,6 +50,9 @@ function Running() {
           portal: () => client.action(api.billing.portal, {}),
           confirmCheckout: (sessionId: string) => client.action(api.billing.confirm, { sessionId }),
           adminStats: () => client.query(api.admin.stats, {}),
+          membersList: () => client.query(api.members.list, {}),
+          membersAdd: (text: string) => client.mutation(api.members.add, { text }),
+          membersRemove: (email: string) => client.mutation(api.members.remove, { email }),
           pushPublicKey: () => client.query(api.push.publicKey, {}),
           pushMine: (endpoint: string) => client.query(api.push.mine, { endpoint }),
           pushSubscribe: (a: { endpoint: string; p256dh: string; auth: string; morning?: string; evening?: string; sunday: boolean }) =>
@@ -81,7 +84,7 @@ function Running() {
   return error ? <div className="gate"><p className="err" role="alert">{error}</p></div> : null;
 }
 
-type Mode = "signIn" | "signUp" | "forgot" | "reset";
+type Mode = "signIn" | "signUp" | "forgot" | "reset" | "verify";
 
 function friendly(mode: Mode, e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e);
@@ -91,6 +94,7 @@ function friendly(mode: Mode, e: unknown): string {
   if (mode === "signIn") return "That email and password don’t match. Check them, or reset your password.";
   if (mode === "signUp") return "We couldn’t create your account. Check your email address and use a password of at least 8 characters.";
   if (mode === "forgot") return "We couldn’t send a code to that address. Check it and try again.";
+  if (mode === "verify") return "That code didn’t work, or it has run out. Check the latest email, or send a new code.";
   return "That code didn’t work, or it has run out. Ask for a new one.";
 }
 
@@ -101,6 +105,7 @@ function SignIn() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
+  const pw = useRef("");
 
   useEffect(() => { document.getElementById("appShell")!.hidden = true; }, []);
   const go = (m: Mode) => { setMode(m); setError(""); setNote(""); };
@@ -121,11 +126,20 @@ function SignIn() {
       if (mode === "signIn" || mode === "signUp") {
         form.set("email", em);
         form.set("flow", mode);
-        await signIn("password", form);
+        pw.current = String(form.get("password") || "");
+        const r = await signIn("password", form);
+        if (!r.signingIn){
+          // A code has been emailed: confirm the address before going in.
+          setMode("verify");
+          setNote(mode === "signUp" ? `Nearly there. We’ve emailed a code to ${em} to confirm it’s yours.` : `We need to confirm your email once. We’ve sent a code to ${em}.`);
+        }
       } else if (mode === "forgot") {
         await signIn("password", { email: em, flow: "reset" });
         setMode("reset");
         setNote(`We’ve emailed a code to ${em}. It works for 20 minutes.`);
+      } else if (mode === "verify") {
+        await signIn("password", { email: em, code: String(form.get("code") || "").trim(), flow: "email-verification" });
+        pw.current = "";
       } else {
         await signIn("password", { email: em, code: String(form.get("code") || "").trim(), newPassword: String(form.get("newPassword") || ""), flow: "reset-verification" });
       }
@@ -136,8 +150,16 @@ function SignIn() {
     }
   }
 
-  const title = { signIn: "Welcome back", signUp: "Begin your crossing", forgot: "Reset your password", reset: "Choose a new password" }[mode];
-  const button = { signIn: "Sign in", signUp: "Create my account", forgot: "Email me a code", reset: "Save new password" }[mode];
+  async function resend() {
+    if (!pw.current) { go("signIn"); return; }
+    setBusy(true); setError("");
+    try { await signIn("password", { email, password: pw.current, flow: "signIn" }); setNote(`We’ve sent a new code to ${email}.`); }
+    catch (err) { setError(friendly("verify", err)); }
+    finally { setBusy(false); }
+  }
+
+  const title = { signIn: "Welcome back", signUp: "Begin your crossing", forgot: "Reset your password", reset: "Choose a new password", verify: "Confirm your email" }[mode];
+  const button = { signIn: "Sign in", signUp: "Create my account", forgot: "Email me a code", reset: "Save new password", verify: "Confirm and continue" }[mode];
 
   return (
     <div className="gate">
@@ -147,7 +169,7 @@ function SignIn() {
           <ul className="gate-points">
             <li><Emb id="narrow" /><span><b>Spot the pattern</b> you keep repeating, and find the belief behind it and where it came from.</span></li>
             <li><Emb id="tent" /><span><b>Take it forty days at a time</b>, with quick daily check-ins, milestones and challenges to keep you going.</span></li>
-            <li><Emb id="crown" /><span><b>Break free.</b> Your journal is private to you; nobody at Indigo Estate reads it.</span></li>
+            <li><Emb id="crown" /><span><b>Break free.</b> Your journal is private to your account. We never sell or share it, and nobody at Indigo Estate looks at it.</span></li>
           </ul>
         </div>
       ) : null}
@@ -159,7 +181,12 @@ function SignIn() {
             <div><label className="lbl" htmlFor="name">Your first name</label>
               <input type="text" id="name" name="name" autoComplete="given-name" placeholder="So we can greet you" /></div>
           ) : null}
-          {mode !== "reset" ? (
+          {mode === "verify" ? (
+            <div><label className="lbl" htmlFor="code">Code from your email</label>
+              <input type="text" id="code" name="code" inputMode="numeric" autoComplete="one-time-code" required placeholder="8 digits" />
+              <p className="muted small" style={{ marginTop: 6 }}>Can’t see it? Check your junk folder. It comes from Indigo Estate.</p></div>
+          ) : null}
+          {mode !== "reset" && mode !== "verify" ? (
             <div><label className="lbl" htmlFor="email">Email</label>
               <input type="email" id="email" name="email" autoComplete="username" required defaultValue={email} placeholder="you@example.com" /></div>
           ) : null}
@@ -188,6 +215,9 @@ function SignIn() {
           {mode === "signIn" ? <>
             <button className="btn text" type="button" onClick={() => go("signUp")}>New here? Create an account</button>
             <button className="btn text" type="button" onClick={() => go("forgot")}>Forgot password?</button>
+          </> : mode === "verify" ? <>
+            <button className="btn text" type="button" disabled={busy} onClick={resend}>Send a new code</button>
+            <button className="btn text" type="button" onClick={() => go("signIn")}>Back to sign in</button>
           </> : <button className="btn text" type="button" onClick={() => go("signIn")}>Back to sign in</button>}
         </div>
       </div>

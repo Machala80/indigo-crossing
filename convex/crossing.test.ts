@@ -312,3 +312,43 @@ describe("phone notifications", () => {
     expect(await t.run((ctx) => ctx.db.query("pushSubs").collect())).toHaveLength(0);
   });
 });
+
+describe("Indigo Estate members list", () => {
+  test("only owners can see or change the list", async () => {
+    const t = convexTest(schema, modules);
+    process.env.ADMIN_EMAILS = "owner@example.com";
+    const someone = await member(t, "someone@example.com");
+    await expect(someone.as.query(api.members.list, {})).rejects.toThrow(/owner only/);
+    await expect(someone.as.mutation(api.members.add, { text: "me@example.com" })).rejects.toThrow(/owner only/);
+    await expect(t.mutation(api.members.add, { text: "me@example.com" })).rejects.toThrow(/owner only/);
+    delete process.env.ADMIN_EMAILS;
+  });
+
+  test("a member gets Plus only once they have confirmed their email, and loses it when removed", async () => {
+    const t = convexTest(schema, modules);
+    process.env.ADMIN_EMAILS = "owner@example.com";
+    const owner = await member(t, "owner@example.com");
+    const r = await owner.as.mutation(api.members.add, { text: "Ann@Example.com, bob@example.com\nnot-an-email\nann@example.com" });
+    expect(r).toEqual({ added: 2, already: 0, invalid: ["not-an-email"] });
+    expect((await owner.as.mutation(api.members.add, { text: "bob@example.com" })).already).toBe(1);
+
+    // Someone signs up with a member's address but never confirms it: no Plus.
+    const ann = await member(t, "ann@example.com");
+    expect((await ann.as.query(api.billing.status, {}))!.plus).toBe(false);
+    // Once the address is confirmed, Plus switches on with no payment.
+    await t.run(async (ctx) => ctx.db.patch(ann.userId, { emailVerificationTime: Date.now() }));
+    const s = (await ann.as.query(api.billing.status, {}))!;
+    expect(s.plus).toBe(true); expect(s.member).toBe(true); expect(s.hasCustomer).toBe(false);
+    // A confirmed account that isn't on the list doesn't get it.
+    const cara = await member(t, "cara@example.com");
+    await t.run(async (ctx) => ctx.db.patch(cara.userId, { emailVerificationTime: Date.now() }));
+    expect((await cara.as.query(api.billing.status, {}))!.plus).toBe(false);
+
+    const list = await owner.as.query(api.members.list, {});
+    expect(list.map((m) => [m.email, m.joined])).toEqual([["ann@example.com", true], ["bob@example.com", false]]);
+
+    await owner.as.mutation(api.members.remove, { email: "ANN@example.com" });
+    expect((await ann.as.query(api.billing.status, {}))!.plus).toBe(false);
+    delete process.env.ADMIN_EMAILS;
+  });
+});

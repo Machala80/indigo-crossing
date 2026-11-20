@@ -868,6 +868,7 @@ const PRICES = {monthly:'£4.99', yearly:'£39'};
 let plusInfo = api.plusInfo || {plus:false, admin:false};
 const isPlus = () => !!plusInfo.plus;
 let plusBusy = '', plusErr = '', welcomeTries = 0, adminStats = null, adminErr = '';
+let memberRows = null, memberErr = '', memberMsg = '', memberDraft = '', memberFilter = '', memberDel = null, memberBusy = false;
 const activeCount = () => realPatterns().filter(p => !p.released).length;
 const plusLink = (label) => `<a class="btn plus-btn small" href="#plus">${label} · Plus</a>`;
 function plusLock(title, line){
@@ -892,7 +893,7 @@ function renderPlus(){
       <div class="stack-sm"><p class="eyebrow">Crossing Plus</p><h2>You have Crossing Plus</h2></div>
       <div class="rank"><span class="emb-badge">${emb('crown')}</span><div class="stack-sm">
         <p class="title">Plus</p>
-        <p class="muted small">${plusInfo.admin && !plusInfo.hasCustomer ? 'Included with your owner account.' : plusInfo.cancelAtPeriodEnd ? `Ends on ${end}. You keep everything until then.` : end ? `Renews on ${end}.` : 'Active.'}</p>
+        <p class="muted small">${plusInfo.admin && !plusInfo.hasCustomer ? 'Included with your owner account.' : plusInfo.member && !(plusInfo.hasCustomer && plusInfo.status === 'active') ? 'Included with your Indigo Estate membership.' : plusInfo.cancelAtPeriodEnd ? `Ends on ${end}. You keep everything until then.` : end ? `Renews on ${end}.` : 'Active.'}</p>
       </div></div>
       <ul class="gate-points">${benefits.map(([e,t,l]) => `<li>${emb(e)}<span><b>${t}.</b> ${l}</span></li>`).join('')}</ul>
       ${plusInfo.hasCustomer ? `<div class="row"><button class="btn ghost" type="button" data-act="portal"${plusBusy?' disabled':''}>${plusBusy==='portal'?'Opening…':'Manage or cancel my plan'}</button></div>` : ''}
@@ -908,7 +909,7 @@ function renderPlus(){
       <div class="plan best"><p class="eyebrow">Yearly · save 35%</p><p class="price">${PRICES.yearly}<span> a year</span></p><button class="btn gold" type="button" data-act="checkout" data-plan="yearly"${plusBusy?' disabled':''}>${plusBusy==='yearly'?'Opening…':'Choose yearly'}</button></div>
     </div>
     ${plusErr?`<p class="err" role="alert">${esc(plusErr)}</p>`:''}
-    <div class="panel"><p><b>Indigo Estate member?</b> Plus is included in your membership. Choose either plan, tap <b>Add promotion code</b> on the payment page, and enter the member code from your members’ area. You won’t be charged.</p></div>
+    <div class="panel"><p><b>Indigo Estate member?</b> Plus is included in your membership, so there’s nothing to pay. It switches on by itself when you’re signed in with the same email address as your membership. If you use a different address here, or Plus hasn’t appeared, email <a href="mailto:enquiries@indigoestate.co.uk">enquiries@indigoestate.co.uk</a> and we’ll sort it.</p></div>
     <p class="muted small">Payments are handled securely by Stripe. Cancel any time from this page; you keep Plus until the end of the period you’ve paid for. Everything you’ve written stays yours either way.</p>
   </section>`;
 }
@@ -936,7 +937,7 @@ function renderOwner(){
   const card = (n, l) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`;
   return `<section class="stack-lg">
     <div class="stack-sm"><p class="eyebrow">Owner dashboard</p><h2>How The Crossing is being used</h2></div>
-    <p class="muted small">Counts only. Members’ journals and email addresses are never shown here.</p>
+    <p class="muted small">Counts only. Nobody’s journal is ever shown here. The only email addresses shown are the members list below, which you add yourself.</p>
     ${adminErr?`<p class="err">${esc(adminErr)}</p>`:''}
     ${!s ? '<p class="muted">Loading…</p>' : `
     <p class="eyebrow">Members</p>
@@ -950,7 +951,32 @@ function renderOwner(){
     <div class="stats">${card(s.plusActive,'Plus members')}${card(s.plusCancelling,'Plus, cancelling')}${card(s.mirror30,'Mirror uses, 30 days')}</div>
     <div class="stats">${card(s.remindersMorning,'Morning reminders')}${card(s.remindersEvening,'Evening reminders')}${card(s.remindersMorning + s.remindersEvening,'Reminders in total')}</div>
     <button class="btn ghost small" type="button" data-act="ownerRefresh" style="align-self:flex-start">Refresh figures</button>`}
+    ${renderMembers()}
   </section>`;
+}
+
+/* Indigo Estate members list: confirmed accounts with these emails get Plus automatically */
+function loadMembers(){ api.membersList().then(r => { memberRows = r; memberErr = ''; if (view()==='owner') render(); }).catch(() => { memberErr = 'Couldn’t load the members list. Refresh to try again.'; if (view()==='owner') render(); }); }
+function renderMembers(){
+  if (memberRows === null && !memberErr) loadMembers();
+  const rows = memberRows || [], f = memberFilter.trim().toLowerCase();
+  const shown = f ? rows.filter(r => r.email.includes(f)) : rows;
+  const joined = rows.filter(r => r.joined).length;
+  return `<div class="panel" id="members">
+    <div class="stack-sm"><p class="eyebrow">Indigo Estate members</p><h3>Members get Plus automatically</h3>
+      <p class="muted small">Add the email addresses your members use. When someone signs in to The Crossing with one of these addresses, and has confirmed it’s theirs, Plus switches on by itself. Remove someone and their free Plus ends. No codes needed.</p></div>
+    <div><label class="lbl" for="m-add">Add members</label><textarea id="m-add" data-bind="memberDraft" placeholder="Paste email addresses, one per line or separated by commas">${esc(memberDraft)}</textarea></div>
+    <div class="row"><button class="btn gold small" type="button" data-act="memberAdd"${memberBusy?' disabled':''}>${memberBusy?'Adding…':'Add to the list'}</button></div>
+    ${memberErr?`<p class="err" role="alert">${esc(memberErr)}</p>`:''}${memberMsg?`<p class="ok" role="status">${esc(memberMsg)}</p>`:''}
+    ${memberRows === null ? '<p class="muted small">Loading…</p>' : `
+    <p class="small"><b>${rows.length}</b> on the list · <b>${joined}</b> joined The Crossing</p>
+    ${rows.length > 8 ? `<div><label class="lbl" for="m-find">Find a member</label><input type="search" id="m-find" data-bind="memberFilter" placeholder="Type part of an email" value="${esc(memberFilter)}"></div>` : ''}
+    <ul class="mlist">${shown.slice(0, 200).map(r => `<li><span class="me">${esc(r.email)}</span><span class="small ${r.joined?'ok':'muted'}">${r.joined?'Joined':'Not joined yet'}</span>${memberDel === r.email
+      ? `<span class="confirm small">Remove?<button class="btn danger small" type="button" data-act="memberRemove" data-e="${esc(r.email)}">Remove</button><button class="btn text" type="button" data-act="memberRemoveNo">Keep</button></span>`
+      : `<button class="btn text small" type="button" data-act="memberRemoveArm" data-e="${esc(r.email)}" aria-label="Remove ${esc(r.email)}">Remove</button>`}</li>`).join('')}</ul>
+    ${shown.length > 200 ? `<p class="muted small">Showing 200 of ${shown.length}. Use the search box to find someone.</p>` : ''}
+    ${!rows.length ? '<p class="muted small">No members added yet.</p>' : ''}`}
+  </div>`;
 }
 
 /* ---------- Phase 2: number goals, several goals, daily habits ---------- */
@@ -1182,7 +1208,7 @@ function renderReminder(){
 function renderAccount(){
   return `<div class="panel">
     <p class="eyebrow">Your account</p>
-    <p>Signed in as <b>${esc(api.email || '')}</b>. Your journal is private: it is stored in your own account, and nobody at Indigo Estate reads it.</p>
+    <p>Signed in as <b>${esc(api.email || '')}</b>. Your journal is private to your account. We never sell or share it, and nobody at Indigo Estate looks at it. It’s stored securely, but like most apps it isn’t end-to-end encrypted. <a href="/privacy.html#safe" target="_blank" rel="noopener">How we keep it safe</a></p>
     <div class="row"><button class="btn ghost small" type="button" data-act="export">Download my journal</button><button class="btn ghost small" type="button" data-act="signOut">Sign out</button><a class="btn ghost small" href="#plus">${isPlus() ? 'My Plus plan' : 'Get Crossing Plus'}</a>${plusInfo.admin ? '<a class="btn ghost small" href="#owner">Owner dashboard</a>' : ''}</div>
     ${delArmed ? `<div class="confirm"><span>Delete your account, journal and reminders for good? This can’t be undone.</span><button class="btn danger small" type="button" data-act="delAccount"${delBusy?' disabled':''}>${delBusy?'Deleting…':'Delete everything'}</button><button class="btn text" type="button" data-act="delCancel">Keep my account</button></div>`
       : `<button class="btn text" type="button" data-act="delArm" style="align-self:flex-start">Delete my account</button>`}
@@ -1471,13 +1497,31 @@ const acts = {
     try { const url = await api.portal(); await flush(); window.location.href = url; }
     catch(e){ plusBusy = ''; plusErr = errText(e, 'We couldn’t open your plan page. Try again in a moment.'); render(); }
   },
-  ownerRefresh(){ adminStats = null; adminErr = ''; render(); },
+  ownerRefresh(){ adminStats = null; adminErr = ''; memberRows = null; memberErr = ''; memberMsg = ''; render(); },
   yPick(b){ state.goalIdx = +b.dataset.i; yr = {}; figureDraft = ''; reviewOpen = false; yearMirror = null; blockedPrompt = null; yearEndArmed = false; save(); render(); },
   yMType(b){ ydraft.mType = b.dataset.v; render(); },
   yFigure(){
     const v = num(figureDraft);
     if (v === null){ toast('Enter a number, e.g. 2500'); return; }
     weekRec(yearWeek()).value = v; figureDraft = ''; save(); render(); toast('Figure saved');
+  },
+  async memberAdd(){
+    if (!memberDraft.trim()){ memberErr = 'Paste at least one email address first.'; memberMsg = ''; render(); return; }
+    memberBusy = true; memberErr = ''; memberMsg = ''; render();
+    try {
+      const r = await api.membersAdd(memberDraft);
+      memberMsg = `Added ${r.added} ${r.added === 1 ? 'member' : 'members'}.` + (r.already ? ` ${r.already} ${r.already === 1 ? 'was' : 'were'} already on the list.` : '') + (r.invalid.length ? ` Skipped ${r.invalid.length} that didn’t look like email addresses: ${r.invalid.slice(0, 5).join(', ')}${r.invalid.length > 5 ? '…' : ''}` : '');
+      memberDraft = ''; memberRows = await api.membersList();
+    } catch(e){ memberErr = errText(e, 'That didn’t save. Try again in a moment.'); }
+    memberBusy = false; render();
+  },
+  memberRemoveArm(b){ memberDel = b.dataset.e; render(); },
+  memberRemoveNo(){ memberDel = null; render(); },
+  async memberRemove(b){
+    const e = b.dataset.e; memberDel = null; memberErr = ''; memberMsg = '';
+    try { await api.membersRemove(e); memberRows = await api.membersList(); memberMsg = `${e} removed. Their free Plus has ended.`; }
+    catch(err){ memberErr = errText(err, 'That didn’t go through. Try again.'); }
+    render();
   },
   hFormOpen(){ habitFormOpen = true; habitDraft = {name:'', cue:''}; render(); const i = $('#h-name'); if (i) i.focus(); },
   hFormClose(){ habitFormOpen = false; render(); },
@@ -1607,6 +1651,8 @@ document.addEventListener('input', e => {
   else if (bind === 'yr'){ yr[t.dataset.k] = t.value; }
   else if (bind === 'ystepnow'){ stepNow = t.value; }
   else if (bind === 'yfig'){ figureDraft = t.value; }
+  else if (bind === 'memberDraft'){ memberDraft = t.value; }
+  else if (bind === 'memberFilter'){ memberFilter = t.value; const c = t.selectionStart; render(); const i = $('#m-find'); if (i){ i.focus(); try { i.setSelectionRange(c, c); } catch(e){} } }
   else if (bind === 'pushPref'){
     push.prefs[t.dataset.k] = t.type === 'checkbox' ? t.checked : t.value;
     if (push.state === 'on' && push.endpoint){

@@ -57,6 +57,12 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_endpoint", ["endpoint"]),
 
+  // Indigo Estate members (emails added by an owner). A confirmed account with one of these emails gets Plus.
+  members: defineTable({
+    email: v.string(),
+    addedAt: v.number(),
+  }).index("by_email", ["email"]),
+
   // How many Mirror reflections each member used per day (cost control).
   mirrorUsage: defineTable({
     userId: v.id("users"),
