@@ -241,3 +241,26 @@ describe("checkout safety net", () => {
     delete process.env.STRIPE_SECRET_KEY;
   });
 });
+
+describe("Phase 2 data on the server", () => {
+  test("Sunday email and dashboard understand several goals and habits", async () => {
+    process.env.ADMIN_EMAILS = "owner@example.com";
+    const t = convexTest(schema, modules);
+    const owner = await member(t, "owner@example.com");
+    const a = await member(t, "a@example.com");
+    await a.as.mutation(api.journal.save, { data: JSON.stringify({
+      goals: [
+        { goal: "Publish my book", start: "2026-11-01", weeks: {} },
+        { goal: "Save £5,000", start: "2026-11-08", weeks: { 1: { value: 250 } }, measure: { unit: "£", start: 0, target: 5000 } },
+      ],
+      habits: [{ id: "h1", name: "Walk", archived: false }, { id: "h2", name: "Old", archived: true }],
+      habitChecks: { "2099-01-01": { h1: 1 } },
+    }) });
+    await a.as.mutation(api.reminders.set, { email: "a@example.com", slot: "morning", consent: "I agree" });
+    expect(await t.action(internal.reminders.sunday, { force: true })).toEqual({ sent: 1 });
+    const s = (await owner.as.query(api.admin.stats, {}))!;
+    expect(s).toMatchObject({ years: 1, goals: 2, numberGoals: 1, habits: 1, habitTicks7: 1 });
+    expect(JSON.stringify(s)).not.toContain("Publish");
+    delete process.env.ADMIN_EMAILS;
+  });
+});

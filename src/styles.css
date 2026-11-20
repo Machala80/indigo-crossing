@@ -478,3 +478,46 @@ a.ppf > *:hover, .ppf a:hover{border-color:var(--am)}
 .price{font-family:var(--f-display);font-size:2rem;color:var(--ink);line-height:1}
 .price span{font-family:var(--f-body);font-size:.95rem;color:var(--ink-soft)}
 @media (max-width:520px){ .plans{grid-template-columns:1fr} }
+
+/* ---------- Phase 2: several goals, number goals, habits ---------- */
+.goaltabs{display:flex;gap:8px;flex-wrap:wrap}
+.goaltab{display:flex;flex-direction:column;gap:2px;text-align:left;max-width:15rem;min-width:0;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);font-family:var(--f-body);font-size:.92rem;cursor:pointer;text-decoration:none;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.goaltab span{font-family:var(--f-ui);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.goaltab.on{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+.goaltab.add{border-style:dashed;color:var(--gold-text)}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.measure .mnow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.measure .mnow b{font-family:var(--f-display);font-size:2rem;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+.measure .mnow span{font-size:.9rem;color:var(--ink-soft)}
+.chartbox{background:var(--surface-2);border-radius:14px;padding:8px}
+.mchart{display:block;width:100%;height:auto}
+.mchart .axis{stroke:var(--line);stroke-width:1}
+.mchart .target{stroke:var(--gold);stroke-width:1.2;stroke-dasharray:4 4}
+.mchart .line{fill:none;stroke:var(--am);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+.mchart .area{fill:var(--am-soft);opacity:.7}
+.mchart .pt{fill:var(--surface);stroke:var(--am);stroke-width:1.6}
+.mchart .pt.last{fill:var(--gold);stroke:var(--gold)}
+.mchart .tl{font-family:var(--f-ui);font-size:9px;fill:var(--ink-soft)}
+.figrow .row{flex-wrap:nowrap}
+.figrow input{flex:1;min-width:0}
+.habits{border-top:1px solid var(--line);padding-top:24px}
+.habit{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.habit.done{border-color:var(--gold);background:linear-gradient(135deg, var(--gold-soft), var(--surface) 70%)}
+.htick{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.htick:hover{border-color:var(--gold)}
+.htick[aria-pressed="true"]{background:var(--gold-grad);border-color:#C9A96E}
+.htick .emb{width:24px;height:24px;color:#3A280C}
+.hbody{display:flex;flex-direction:column;gap:2px;min-width:0}
+.hbody b{font-weight:500;color:var(--ink);overflow-wrap:anywhere}
+.hmeta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.hdots{display:inline-flex;gap:3px}
+.hdots i{width:10px;height:10px;border-radius:50%;border:1px solid var(--line);display:block}
+.hdots i.on{background:var(--gold);border-color:var(--gold)}
+.hdots i.today{outline:1px solid var(--ink-soft);outline-offset:1px}
+.hdel{font-size:11px;padding:4px 0}
+@media (max-width:520px){
+  .three{grid-template-columns:1fr}
+  .habit{grid-template-columns:auto minmax(0,1fr)}
+  .habit .hdel,.habit .confirm{grid-column:2}
+  .goaltab{max-width:100%}
+}

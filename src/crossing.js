@@ -39,7 +39,7 @@ const RANKS = [
   {n:'Sovereign',m:500,  line:'You govern yourself. The pattern no longer rules.'},
   {n:'Architect',m:1000, line:'You build freedom, for yourself and for others.'}
 ];
-const EARN = [['Pledge',1],['Held day',3],['Noticed',2],['Urge ridden out',5],['Honest slip log',1],['Evening examen',2],['Belief questioned',8],['Daily dare',5],['Trial quest',10],['Trial complete',30],['Weekly step done',10],['Sunday review',5],['Season milestone',20]];
+const EARN = [['Pledge',1],['Held day',3],['Noticed',2],['Urge ridden out',5],['Honest slip log',1],['Evening examen',2],['Belief questioned',8],['Daily dare',5],['Trial quest',10],['Trial complete',30],['Weekly step done',10],['Sunday review',5],['Season milestone',20],['Habit done',1]];
 const TRIAL = [
   {t:'Say it aloud',          d:'Tell your witness the name of the pattern you are walking out of.', auto:null},
   {t:'Catch it once',         d:'Check in as Held or Noticed on any pattern.', auto:'check'},
@@ -139,7 +139,7 @@ const emb = (id, cls) => `<svg class="emb${cls?' '+cls:''}" aria-hidden="true"><
 const dayIndex = () => Math.floor(fromKey(todayKey()).getTime() / 86400000);
 
 /* ---------- State & saving ---------- */
-function blank(){ return {v:3, patterns:[], checks:{}, slips:{}, intentions:{}, pledges:{}, examens:{}, urges:[], dares:{}, quest:{start:null, done:{}, complete:null, trials:0}, rankSeen:null, year:null, yearsCompleted:0, witness:{name:'',next:'',stake:'',rhythm:'weekly'}}; }
+function blank(){ return {v:3, patterns:[], checks:{}, slips:{}, intentions:{}, pledges:{}, examens:{}, urges:[], dares:{}, quest:{start:null, done:{}, complete:null, trials:0}, rankSeen:null, goals:[], goalIdx:0, yearsCompleted:0, habits:[], habitChecks:{}, witness:{name:'',next:'',stake:'',rhythm:'weekly'}}; }
 function normalise(s){
   const b = blank();
   if (!s || typeof s !== 'object') return b;
@@ -149,7 +149,14 @@ function normalise(s){
   b.witness = Object.assign({name:'',next:'',stake:'',rhythm:'weekly'}, typeof b.witness === 'object' ? b.witness : {});
   b.quest = Object.assign({start:null, done:{}, complete:null, trials:0}, typeof b.quest === 'object' ? b.quest : {});
   b.patterns.forEach(p => { if (!Array.isArray(p.inquiries)) p.inquiries = []; });
-  if (b.year && typeof b.year === 'object'){ b.year.weeks = b.year.weeks || {}; b.year.milestones = b.year.milestones || {}; b.year.seasons = Array.isArray(b.year.seasons) ? b.year.seasons : ['','','','']; } else b.year = null;
+  // Older journals kept one goal in "year"; it becomes the first of the goals list.
+  if (!Array.isArray(b.goals)) b.goals = [];
+  if (s.year && typeof s.year === 'object' && !b.goals.length) b.goals = [s.year];
+  b.goals.forEach((g, i) => { g.id = g.id || ('g' + i + Date.now().toString(36)); g.weeks = g.weeks || {}; g.milestones = g.milestones || {}; g.seasons = Array.isArray(g.seasons) ? g.seasons : ['','','','']; });
+  b.goalIdx = Math.min(Math.max(0, b.goalIdx|0), Math.max(0, b.goals.length - 1));
+  if (!Array.isArray(b.habits)) b.habits = [];
+  if (!b.habitChecks || typeof b.habitChecks !== 'object') b.habitChecks = {};
+  delete b.year;
   b.v = 3;
   return b;
 }
@@ -227,7 +234,8 @@ function manna(){
   t += Object.keys(state.pledges).length;
   t += 5 * Object.keys(state.dares).length;
   t += 10 * Object.keys(state.quest.done||{}).length + 30 * (state.quest.trials||0);
-  if (state.year){ for (const k in state.year.weeks){ const w = state.year.weeks[k]; t += w.done==='yes'?10 : w.done==='partly'?4 : 0; if (w.review) t += 5; } t += 20 * Object.keys(state.year.milestones||{}).length; }
+  for (const g of state.goals){ for (const k in g.weeks){ const w = g.weeks[k]; t += w.done==='yes'?10 : w.done==='partly'?4 : 0; if (w.review) t += 5; } t += 20 * Object.keys(g.milestones||{}).length; }
+  for (const k in state.habitChecks) t += Object.keys(state.habitChecks[k]).length;
   t += 100 * (state.yearsCompleted||0);
   return t;
 }
@@ -366,6 +374,7 @@ function renderToday(){
     ${slippedYesterday.length ? `<p class="notice"><b>Never twice.</b> Yesterday ${esc(slippedYesterday.map(p=>p.name).join(' and '))} ran you. One slip is a stumble; two in a row starts a road back. Today matters more than yesterday.</p>` : ''}
     ${ex ? `<div class="empty">${emb('gate')}<p class="eyebrow">Begin here</p><h3>You haven’t traced a pattern yet.</h3><p class="muted small">Below is an example of a traced pattern once you’re checking in each day. Trace your own and it takes the example’s place.</p><a class="btn gold" href="#trace" data-act="newTrace">Trace your first pattern</a></div>` : ''}
     <div class="stack">${cards}</div>
+    ${renderHabits()}
     ${!ex ? `<div class="examen">
       <div class="stack-sm"><p class="eyebrow">Evening examen</p><p class="muted small">Four questions to close the day, adapted from the Ignatian examen.</p></div>
       ${exField('grateful','I give thanks for','One gift from today, however small')}
@@ -646,7 +655,7 @@ function renderJourney(){
     ${!ex ? `<div class="ppf">
       <a href="#patterns"><svg class="emb" aria-hidden="true"><use href="#e-narrow"/></svg><b>Past</b><span>${realPatterns().length} pattern${realPatterns().length===1?'':'s'} traced to the root</span></a>
       <a href="#today"><svg class="emb" aria-hidden="true"><use href="#e-tent"/></svg><b>Present</b><span>${list.reduce((a,p)=>a+stats(p).held,0)} days held</span></a>
-      <a href="#future" class="now"><svg class="emb" aria-hidden="true"><use href="#e-sunrise"/></svg><b>Future</b><span>${state.year ? `Week ${yearWeek()} of 52: ${esc(state.year.goal)}` : 'Your Sovereign Year is waiting'}</span></a>
+      <a href="#future" class="now"><svg class="emb" aria-hidden="true"><use href="#e-sunrise"/></svg><b>Future</b><span>${G() ? `Week ${yearWeek()} of 52: ${esc(state.goals[0].goal)}${state.goals.length > 1 ? ` (+${state.goals.length - 1} more)` : ''}` : 'Your Sovereign Year is waiting'}</span></a>
     </div>` : ''}
     ${ex?'<p class="muted small"><span class="chip example">Example</span> These figures show the example pattern until you trace your own.</p>':''}
     <div class="pathbox">${svg}</div>
@@ -690,6 +699,8 @@ function renderJourney(){
 }
 
 /* ---------- Future: the Sovereign Year ---------- */
+const MAX_GOALS = 3;
+const G = () => state.goals[state.goalIdx] || null;
 /* Past is traced, present is held, future is built: one goal, 52 weekly steps, four seasons. */
 const SEASONS = [
   {name:'Seedtime', from:1,  to:13, emb:'sprout', line:'Plant the first seeds. Small, steady, every week.'},
@@ -700,20 +711,21 @@ const SEASONS = [
 const YSTEPS = [
   {title:'Who you are becoming', q:'Who are you becoming this year?', hint:'Carry forward an “I am someone who…” from a pattern you’ve traced, or write a new one. The whole year is built for this person.'},
   {title:'One goal', q:'What is the one thing you will build in the next 52 weeks?', hint:'One goal, not five. Make it something you’ll clearly know you’ve done: “Publish my book”, not “write more”.'},
+  {title:'How you\u2019ll know', q:'How will you know you\u2019re getting there?', hint:'Some goals are a number: money saved, weight, words written, clients signed. If yours is, track it and watch the line move each week. If not, your weekly steps are the measure.'},
   {title:'Why it matters', q:'Why does this matter, and what are you walking out of to get there?', hint:'The future grows from the past. Link it to a pattern you’re leaving behind, if one fits.'},
   {title:'Four seasons', q:'What will be true at the end of each season?', hint:'A milestone every 13 weeks. Rough is fine; you can change these later.'},
   {title:'Week one', q:'Write a letter from your future self, and choose this week’s first step.', hint:'Your future self has already done it. What do they want you to know? Then name one step small enough to finish in the next seven days.'}
 ];
-const yearWeek = () => { const y = state.year; if (!y) return 0; const days = Math.floor((fromKey(todayKey()) - fromKey(y.start)) / 86400000); return Math.min(52, Math.max(1, Math.floor(days / 7) + 1)); };
+const yearWeek = () => { const y = G(); if (!y) return 0; const days = Math.floor((fromKey(todayKey()) - fromKey(y.start)) / 86400000); return Math.min(52, Math.max(1, Math.floor(days / 7) + 1)); };
 const seasonOf = w => SEASONS.findIndex(s => w >= s.from && w <= s.to);
-const weekRec = n => (state.year.weeks[n] || (state.year.weeks[n] = {}));
-const weekStart = n => addDays(fromKey(state.year.start), (n - 1) * 7);
+const weekRec = n => (G().weeks[n] || (G().weeks[n] = {}));
+const weekStart = n => addDays(fromKey(G().start), (n - 1) * 7);
 const isSunday = () => new Date().getDay() === 0;
-function yearDone(){ return state.year ? Object.values(state.year.weeks).filter(w => w.done === 'yes').length : 0; }
+function yearDone(){ return G() ? Object.values(G().weeks).filter(w => w.done === 'yes').length : 0; }
 
 let ydraft = null, ystep = 0, yErr = '', yearBusy = false, yearMirrorErr = '', yearMirror = null, reviewOpen = false, yearEndArmed = false, blockedPrompt = null;
 
-function blankYear(){ return {identity:'', goal:'', why:'', fromPattern:'', seasons:['','','',''], letter:'', firstStep:''}; }
+function blankYear(){ return {identity:'', goal:'', why:'', fromPattern:'', seasons:['','','',''], letter:'', firstStep:'', mType:'steps', mUnit:'', mStart:'', mTarget:''}; }
 
 function ring52(done, current){
   let s = '';
@@ -727,6 +739,7 @@ function ring52(done, current){
 
 function renderYearSetup(){
   if (!isPlus()) return renderFuture();
+  if (!ydraft){ if (state.goals.length >= MAX_GOALS) return renderFuture(); ydraft = blankYear(); yEditing = false; }
   if (!ydraft) ydraft = blankYear();
   const d = ydraft, S = YSTEPS[ystep];
   let prog = ''; for (let i = 0; i < YSTEPS.length; i++) prog += `<span class="${i<ystep?'done':i===ystep?'here':''}"></span>`;
@@ -735,24 +748,30 @@ function renderYearSetup(){
   if (ystep === 0) body = `${ids.length ? `<div class="row">${ids.map(t => `<button type="button" class="pick" data-act="yPickId" data-v="${esc(t)}">I am someone who ${esc(t)}</button>`).join('')}</div>` : ''}
     <div><label class="lbl" for="y-identity">I am someone who</label><input type="text" id="y-identity" data-bind="ydraft" data-k="identity" placeholder="e.g. finishes what I start" value="${esc(d.identity)}"></div>`;
   if (ystep === 1) body = `<div><label class="lbl" for="y-goal">My goal for the next 52 weeks</label><input type="text" id="y-goal" data-bind="ydraft" data-k="goal" placeholder="e.g. Publish my first book" value="${esc(d.goal)}"></div>`;
-  if (ystep === 2) body = `<div><label class="lbl" for="y-why">Why it matters</label><textarea id="y-why" data-bind="ydraft" data-k="why" placeholder="Who benefits? What changes when it’s done?">${esc(d.why)}</textarea></div>
+  if (ystep === 2) body = `<div class="yn" role="group" aria-label="How you'll measure it">${[['steps','By my weekly steps'],['number','By a number']].map(([v,l]) => `<button type="button" class="choice" data-act="yMType" data-v="${v}" aria-pressed="${(d.mType||'steps')===v}">${l}</button>`).join('')}</div>
+    ${d.mType === 'number' ? `<div class="three">
+      <div><label class="lbl" for="y-mstart">Where you are now</label><input type="text" inputmode="decimal" id="y-mstart" data-bind="ydraft" data-k="mStart" placeholder="e.g. 0" value="${esc(d.mStart)}"></div>
+      <div><label class="lbl" for="y-mtarget">Where you\u2019re heading</label><input type="text" inputmode="decimal" id="y-mtarget" data-bind="ydraft" data-k="mTarget" placeholder="e.g. 5000" value="${esc(d.mTarget)}"></div>
+      <div><label class="lbl" for="y-munit">Unit</label><input type="text" id="y-munit" data-bind="ydraft" data-k="mUnit" placeholder="e.g. \u00a3, kg, words" value="${esc(d.mUnit)}"></div>
+    </div><p class="muted small">It works both ways: going up (saving \u00a35,000) or down (from 14 stone to 12). Each Sunday you\u2019ll log where you are.</p>` : ''}`;
+  if (ystep === 3) body = `<div><label class="lbl" for="y-why">Why it matters</label><textarea id="y-why" data-bind="ydraft" data-k="why" placeholder="Who benefits? What changes when it’s done?">${esc(d.why)}</textarea></div>
     ${realPatterns().length ? `<div><span class="lbl">It grows from walking out of</span><div class="row">${realPatterns().map(p => `<button type="button" class="pick${d.fromPattern===p.id?' on':''}" data-act="yPickPattern" data-v="${esc(p.id)}" aria-pressed="${d.fromPattern===p.id}">${esc(p.name)}</button>`).join('')}</div></div>` : ''}`;
-  if (ystep === 3) body = SEASONS.map((s, i) => `<div><label class="lbl" for="y-s${i}">${s.name} · by week ${s.to}</label><input type="text" id="y-s${i}" data-bind="yseason" data-i="${i}" placeholder="${['e.g. First three chapters drafted','e.g. Full first draft finished','e.g. Edited and cover designed','e.g. Published and launched'][i]}" value="${esc(d.seasons[i])}"></div>`).join('');
-  if (ystep === 4) body = `<div><label class="lbl" for="y-letter">A letter from your future self (optional)</label><textarea id="y-letter" data-bind="ydraft" data-k="letter" placeholder="Dear me, a year ago today…">${esc(d.letter)}</textarea></div>
+  if (ystep === 4) body = SEASONS.map((s, i) => `<div><label class="lbl" for="y-s${i}">${s.name} · by week ${s.to}</label><input type="text" id="y-s${i}" data-bind="yseason" data-i="${i}" placeholder="${['e.g. First three chapters drafted','e.g. Full first draft finished','e.g. Edited and cover designed','e.g. Published and launched'][i]}" value="${esc(d.seasons[i])}"></div>`).join('');
+  if (ystep === 5) body = `<div><label class="lbl" for="y-letter">A letter from your future self (optional)</label><textarea id="y-letter" data-bind="ydraft" data-k="letter" placeholder="Dear me, a year ago today…">${esc(d.letter)}</textarea></div>
     <div><label class="lbl" for="y-first">This week’s first step</label><input type="text" id="y-first" data-bind="ydraft" data-k="firstStep" placeholder="One thing you can finish in seven days" value="${esc(d.firstStep)}"></div>`;
   const last = ystep === YSTEPS.length - 1;
   return `<section class="stack-lg">
-    <div class="stack-sm"><p class="eyebrow">${state.year ? 'Editing your' : 'Begin your'} Sovereign Year · Step ${ystep+1} of ${YSTEPS.length} · ${S.title}</p><div class="progress" style="--n:${YSTEPS.length}">${prog}</div></div>
+    <div class="stack-sm"><p class="eyebrow">${yEditing ? 'Editing your goal' : state.goals.length ? 'Add a goal' : 'Begin your Sovereign Year'} · Step ${ystep+1} of ${YSTEPS.length} · ${S.title}</p><div class="progress" style="--n:${YSTEPS.length}">${prog}</div></div>
     <div class="stack"><h2 class="q">${S.q}</h2><p class="hint">${S.hint}</p>${body}${yErr?`<p class="err" role="alert">${esc(yErr)}</p>`:''}</div>
     <div class="step-nav">
       ${ystep>0 ? `<button class="btn ghost" type="button" data-act="yBack">Back</button>` : `<button class="btn text" type="button" data-act="yCancel">Cancel</button>`}
-      ${last ? `<button class="btn gold" type="button" data-act="ySave">${state.year ? 'Save changes' : 'Begin my Sovereign Year'}</button>` : `<button class="btn" type="button" data-act="yNext">Next</button>`}
+      ${last ? `<button class="btn gold" type="button" data-act="ySave">${yEditing ? 'Save changes' : state.goals.length ? 'Add this goal' : 'Begin my Sovereign Year'}</button>` : `<button class="btn" type="button" data-act="yNext">Next</button>`}
     </div>
   </section>`;
 }
 
 function renderFuture(){
-  const y = state.year;
+  const y = G();
   if (!isPlus()) return `<section class="stack-lg"><div class="stack-sm"><p class="eyebrow">Future</p><h2>Build on the ground you\u2019ve cleared</h2></div>
       <div class="ppf"><div><svg class="emb" aria-hidden="true"><use href="#e-narrow"/></svg><b>Past</b><span>Where it came from. You trace it.</span></div><div><svg class="emb" aria-hidden="true"><use href="#e-tent"/></svg><b>Present</b><span>What you do today. You hold it.</span></div><div class="now"><svg class="emb" aria-hidden="true"><use href="#e-sunrise"/></svg><b>Future</b><span>Who you are building. You plan it.</span></div></div>
       ${plusLock('Your Sovereign Year', 'One goal, built over 52 weeks: a small step each week, a Sunday review, four seasons and the Mirror as your coach.')}${y ? '<p class="muted small">Your Sovereign Year is saved and will be waiting for you.</p>' : ''}</section>`;
@@ -791,6 +810,7 @@ function renderFuture(){
       <div class="two"><div><label class="lbl" for="yr-helped">What helped</label><textarea id="yr-helped" data-bind="yr" data-k="helped" placeholder="People, times, habits that made it easier">${esc(yr.helped||'')}</textarea></div>
       <div><label class="lbl" for="yr-blocked">What got in the way</label><textarea id="yr-blocked" data-bind="yr" data-k="blocked" placeholder="Be honest; this is where the patterns show up">${esc(yr.blocked||'')}</textarea></div></div>
       ${blocked.length ? `<div><span class="lbl">Was it an old pattern?</span><div class="row">${blocked.map(p => `<button type="button" class="pick${yr.pid===p.id?' on':''}" data-act="yPid" data-v="${esc(p.id)}" aria-pressed="${yr.pid===p.id}">${esc(p.name)}</button>`).join('')}<button type="button" class="pick${yr.pid==='none'?' on':''}" data-act="yPid" data-v="none" aria-pressed="${yr.pid==='none'}">No, something else</button></div></div>` : ''}
+      ${y.measure ? `<div><label class="lbl" for="yr-value">Your figure now (${esc(y.measure.unit || 'number')})</label><input type="text" inputmode="decimal" id="yr-value" data-bind="yr" data-k="value" placeholder="Where are you this week?" value="${esc(yr.value != null ? String(yr.value) : '')}"></div>` : ''}
       ${n < 52 ? `<div><label class="lbl" for="yr-next">Next week’s step</label><input type="text" id="yr-next" data-bind="yr" data-k="next" placeholder="One thing you can finish in seven days" value="${esc(yr.next||'')}">
         ${mirrorOn() ? `<button class="btn text" type="button" data-act="yMirror"${yearBusy?' disabled':''}>${yearBusy?'The Mirror is thinking…':'Ask the Mirror to suggest a step'}</button>` : ''}
         ${yearMirror ? `<p class="small muted"><em>${esc(yearMirror.why||'')}</em></p>` : ''}${yearMirrorErr?`<p class="err">${esc(yearMirrorErr)}</p>`:''}</div>` : ''}
@@ -798,7 +818,8 @@ function renderFuture(){
       <div><button class="btn gold" type="button" data-act="yReviewSave">Close the week</button></div>
     </div>`;
   return `<section class="stack-lg">
-    <div class="stack-sm"><p class="eyebrow">Future · your Sovereign Year</p><h2>${esc(y.goal)}</h2></div>
+    ${goalSwitcher()}
+    <div class="stack-sm"><p class="eyebrow">Future \u00b7 ${state.goals.length > 1 ? (state.goalIdx === 0 ? 'your main goal' : 'goal ' + (state.goalIdx + 1)) : 'your Sovereign Year'}</p><h2>${esc(y.goal)}</h2></div>
     <div class="rank year">
       <div class="ringwrap">${ring52(done, n)}<span class="ringcap" style="color:var(--sky-soft)">week of 52</span></div>
       <div class="stack-sm">
@@ -816,6 +837,7 @@ function renderFuture(){
         : cur.done==='partly' ? '<span class="muted small">Partly done.</span><button class="btn gold small" type="button" data-act="yStepDone">I finished it</button>'
         : '<button class="btn gold" type="button" data-act="yStepDone">I did it</button>'}</div>` : ''}
     </div>`}
+    ${measureCard(y)}
     ${blockedPrompt ? `<p class="notice"><b>The past showed up in the present.</b> ${esc(blockedPrompt.name)} got in the way this week. <a href="#question" data-act="inqStart" data-id="${esc(blockedPrompt.id)}">Question the belief behind it</a>, or check in on it under Today.</p>` : ''}
     ${review}
     <div class="stack"><p class="eyebrow">Four seasons</p>
@@ -834,7 +856,7 @@ function renderFuture(){
     ${y.letter ? `<details class="letterbox"><summary>Read the letter from your future self</summary><p>${esc(y.letter).replace(/\n/g,'<br>')}</p></details>` : ''}
     <div class="pat-actions">
       <button class="btn ghost small" type="button" data-act="yEdit">Edit my year</button>
-      ${yearEndArmed ? `<span class="confirm">End this year and start again? Your weeks will be cleared.<button class="btn danger small" type="button" data-act="yEnd">End it</button><button class="btn text" type="button" data-act="yEndNo">Keep going</button></span>` : `<button class="btn text" type="button" data-act="yEndArm">End this year</button>`}
+      ${yearEndArmed ? `<span class="confirm">Remove this goal? Its weeks will be cleared.<button class="btn danger small" type="button" data-act="yEnd">End it</button><button class="btn text" type="button" data-act="yEndNo">Keep going</button></span>` : `<button class="btn text" type="button" data-act="yEndArm">${state.goals.length > 1 ? 'Remove this goal' : 'End this year'}</button>`}
     </div>
   </section>`;
 }
@@ -922,6 +944,7 @@ function renderOwner(){
     <div class="stats">${card(s.active7,'Used the app')}${card(s.checkingIn7,'Checked in')}${card(s.checkins7,'Check-ins')}</div>
     <p class="eyebrow">The work</p>
     <div class="stats">${card(s.patterns,'Patterns traced')}${card(s.released,'Patterns released')}${card(s.years,'Sovereign Years')}</div>
+    <div class="stats">${card(s.goals ?? 0,'Goals in progress')}${card(s.habits ?? 0,'Habits being built')}${card(s.habitTicks7 ?? 0,'Habit ticks this week')}</div>
     <p class="eyebrow">Plus and reminders</p>
     <div class="stats">${card(s.plusActive,'Plus members')}${card(s.plusCancelling,'Plus, cancelling')}${card(s.mirror30,'Mirror uses, 30 days')}</div>
     <div class="stats">${card(s.remindersMorning,'Morning reminders')}${card(s.remindersEvening,'Evening reminders')}${card(s.remindersMorning + s.remindersEvening,'Reminders in total')}</div>
@@ -929,8 +952,112 @@ function renderOwner(){
   </section>`;
 }
 
+/* ---------- Phase 2: number goals, several goals, daily habits ---------- */
+let yEditing = false, figureDraft = '', habitDraft = {name:'', cue:''}, habitFormOpen = false, habitDelArmed = null;
+const HABITS_FREE = 1, HABITS_PLUS = 5;
+const activeHabits = () => state.habits.filter(h => !h.archived);
+const habitLimit = () => isPlus() ? HABITS_PLUS : HABITS_FREE;
+const num = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : null; };
+function measureFrom(d){
+  if (d.mType !== 'number') return null;
+  const start = num(d.mStart), target = num(d.mTarget);
+  if (start === null || target === null || start === target) return null;
+  return {unit:(d.mUnit||'').trim().slice(0, 20), start, target};
+}
+const fmtNum = (n, unit) => { const r = Math.round(n * 100) / 100; const u = (unit||'').trim(); const t = r.toLocaleString('en-GB'); return !u ? t : /^[£$€]$/.test(u) ? u + t : `${t} ${u}`; };
+function measureNow(y){
+  let cur = y.measure.start, at = 0;
+  Object.keys(y.weeks).map(Number).sort((a,b)=>a-b).forEach(w => { const v = y.weeks[w].value; if (typeof v === 'number'){ cur = v; at = w; } });
+  const frac = Math.max(0, Math.min(1, (cur - y.measure.start) / (y.measure.target - y.measure.start)));
+  return {cur, at, frac};
+}
+function measureChart(y){
+  const m = y.measure, pts = [[0, m.start]];
+  Object.keys(y.weeks).map(Number).sort((a,b)=>a-b).forEach(w => { const v = y.weeks[w].value; if (typeof v === 'number') pts.push([w, v]); });
+  const W = 320, H = 150, L = 46, R = 20, T = 12, B = 26;
+  const lastWeek = Math.max(13, ...pts.map(p => p[0]), yearWeek());
+  const vals = pts.map(p => p[1]).concat([m.start, m.target]);
+  let lo = Math.min(...vals), hi = Math.max(...vals); const pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
+  const x = w => L + (w / lastWeek) * (W - L - R), y_ = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p[0]).toFixed(1)} ${y_(p[1]).toFixed(1)}`).join(' ');
+  const area = `${line} L${x(pts[pts.length-1][0]).toFixed(1)} ${(H - B).toFixed(1)} L${x(0).toFixed(1)} ${(H - B).toFixed(1)} Z`;
+  const ticks = [0, Math.round(lastWeek / 2), lastWeek];
+  return `<svg class="mchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Your figure each week, from ${fmtNum(m.start, m.unit)} towards ${fmtNum(m.target, m.unit)}">
+    <line class="axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/>
+    <line class="target" x1="${L}" y1="${y_(m.target).toFixed(1)}" x2="${W-R}" y2="${y_(m.target).toFixed(1)}"/>
+    <text class="tl" x="${L-6}" y="${(y_(m.target)+4).toFixed(1)}" text-anchor="end">${esc(fmtNum(m.target, m.unit))}</text>
+    <text class="tl" x="${L-6}" y="${(y_(m.start)+4).toFixed(1)}" text-anchor="end">${esc(fmtNum(m.start, m.unit))}</text>
+    ${pts.length > 1 ? `<path class="area" d="${area}"/><path class="line" d="${line}"/>` : ''}
+    ${pts.map((p, i) => `<circle class="${i === pts.length - 1 ? 'pt last' : 'pt'}" cx="${x(p[0]).toFixed(1)}" cy="${y_(p[1]).toFixed(1)}" r="${i === pts.length - 1 ? 4.5 : 3}"><title>Week ${p[0]}: ${esc(fmtNum(p[1], m.unit))}</title></circle>`).join('')}
+    ${ticks.map(t => `<text class="tl" x="${x(t).toFixed(1)}" y="${H - 8}" text-anchor="middle">${t === 0 ? 'Start' : 'Wk ' + t}</text>`).join('')}
+  </svg>`;
+}
+function measureCard(y){
+  if (!y.measure) return '';
+  const m = y.measure, {cur, at, frac} = measureNow(y), n = yearWeek(), thisWeek = (y.weeks[n] || {}).value;
+  const left = m.target - cur;
+  return `<div class="dare measure">
+    <div class="row"><span class="emb-badge">${emb('sinai')}</span><div class="stack-sm" style="gap:2px"><p class="eyebrow">Your number</p><p class="muted small">From ${esc(fmtNum(m.start, m.unit))} to ${esc(fmtNum(m.target, m.unit))}</p></div></div>
+    <div class="mnow"><b>${esc(fmtNum(cur, m.unit))}</b><span>${at ? `as of week ${at}` : 'your starting point'} · ${Math.round(frac * 100)}% of the way</span></div>
+    <span class="track"><span class="fill" style="width:${Math.round(frac * 100)}%"></span></span>
+    <p class="small muted">${frac >= 1 ? 'Target reached.' : `${esc(fmtNum(Math.abs(left), m.unit))} to go.`}</p>
+    <div class="chartbox">${measureChart(y)}</div>
+    <div class="figrow"><label class="lbl" for="y-fig">Your figure this week${typeof thisWeek === 'number' ? ` (now ${esc(fmtNum(thisWeek, m.unit))})` : ''}</label>
+      <div class="row"><input type="text" inputmode="decimal" id="y-fig" data-bind="yfig" placeholder="e.g. ${esc(String(m.target))}" value="${esc(figureDraft)}"><button class="btn small" type="button" data-act="yFigure">Save figure</button></div></div>
+  </div>`;
+}
+function goalSwitcher(){
+  if (!state.goals.length) return '';
+  const can = state.goals.length < MAX_GOALS;
+  if (state.goals.length === 1 && !can) return '';
+  return `<div class="goaltabs" role="tablist" aria-label="Your goals">
+    ${state.goals.map((g, i) => `<button type="button" role="tab" class="goaltab${i === state.goalIdx ? ' on' : ''}" aria-selected="${i === state.goalIdx}" data-act="yPick" data-i="${i}"><span>${i === 0 ? 'Main goal' : 'Goal ' + (i + 1)}</span>${esc(g.goal)}</button>`).join('')}
+    ${can ? `<a class="goaltab add" href="#yearsetup" data-act="yStart"><span>Up to ${MAX_GOALS}</span>+ Add a goal</a>` : ''}
+  </div>`;
+}
+
+/* Habits I'm building (daily ticks), shown on Today */
+function habitStreak(id){
+  let n = 0, d = new Date();
+  const has = k => !!(state.habitChecks[k] && state.habitChecks[k][id]);
+  if (!has(dkey(d))) d = addDays(d, -1);
+  while (has(dkey(d))){ n++; d = addDays(d, -1); }
+  return n;
+}
+const habitTotal = id => Object.keys(state.habitChecks).filter(k => state.habitChecks[k][id]).length;
+function renderHabits(){
+  const k = todayKey(), list = activeHabits(), limit = habitLimit();
+  const rows = list.map(h => {
+    const done = !!(state.habitChecks[k] && state.habitChecks[k][h.id]);
+    let dots = ''; for (let i = 6; i >= 0; i--){ const dk = dkey(addDays(new Date(), -i)); const on = state.habitChecks[dk] && state.habitChecks[dk][h.id]; dots += `<i class="${on ? 'on' : ''}${i === 0 ? ' today' : ''}" title="${fmtShort(fromKey(dk))}${on ? ': done' : ''}"></i>`; }
+    const st = habitStreak(h.id);
+    return `<div class="habit${done ? ' done' : ''}">
+      <button type="button" class="htick" data-act="hTick" data-id="${esc(h.id)}" aria-pressed="${done}" aria-label="${done ? 'Done today: ' : 'Mark done today: '}${esc(h.name)}">${done ? emb('seal') : ''}</button>
+      <div class="hbody"><b>${esc(h.name)}</b>${h.cue ? `<span class="muted small">After I ${esc(h.cue)}</span>` : ''}
+        <div class="hmeta"><span class="hdots" aria-label="Last 7 days">${dots}</span><span class="small muted">${st ? `${st} day${st > 1 ? 's' : ''} in a row` : 'Start today'} · ${habitTotal(h.id)} in total</span></div></div>
+      ${habitDelArmed === h.id ? `<span class="confirm small">Remove?<button class="btn danger small" type="button" data-act="hRemove" data-id="${esc(h.id)}">Remove</button><button class="btn text" type="button" data-act="hRemoveNo">Keep</button></span>` : `<button class="btn text small hdel" type="button" data-act="hRemoveArm" data-id="${esc(h.id)}" aria-label="Remove ${esc(h.name)}">Remove</button>`}
+    </div>`;
+  }).join('');
+  const canAdd = list.length < limit;
+  const form = habitFormOpen ? `<div class="panel">
+      <div><label class="lbl" for="h-name">The habit</label><input type="text" id="h-name" data-bind="habit" data-k="name" placeholder="e.g. Walk for 20 minutes" value="${esc(habitDraft.name)}"></div>
+      <div><label class="lbl" for="h-cue">After I… (optional)</label><input type="text" id="h-cue" data-bind="habit" data-k="cue" placeholder="e.g. drop the children at school" value="${esc(habitDraft.cue)}">
+        <p class="muted small" style="margin-top:6px">Tie it to something you already do every day. It’s the most reliable way to make a new habit stick.</p></div>
+      <div class="row"><button class="btn gold small" type="button" data-act="hAdd">Add habit</button><button class="btn text" type="button" data-act="hFormClose">Cancel</button></div>
+    </div>`
+    : canAdd ? `<button class="btn ghost small" type="button" data-act="hFormOpen" style="align-self:flex-start">+ Add a habit to build</button>`
+    : !isPlus() ? `<p class="muted small">Free plan: one habit at a time. <a href="#plus">Plus</a> lets you build up to ${HABITS_PLUS}.</p>`
+    : `<p class="muted small">You’re building ${HABITS_PLUS} habits, the most at once. Remove one to add another.</p>`;
+  return `<div class="stack habits">
+    <div class="stack-sm"><p class="eyebrow">Habits I’m building</p><p class="muted small">The patterns above are what you’re walking out of. These are what you’re walking into, one tick a day. +1 manna each.</p></div>
+    ${rows || (habitFormOpen ? '' : '<p class="muted small">No habits yet. Add one small thing you want to do every day.</p>')}
+    ${form}
+  </div>`;
+}
+
 function weekSummary(){
-  const ex = showingExample();
+  // Only fall back to the example when there's nothing of the member's own to report.
+  const ex = showingExample() && !state.goals.length && !activeHabits().length;
   const list = ex ? [EXAMPLE] : realPatterns().filter(p => !p.released);
   const days = []; for (let i = 6; i >= 0; i--) days.push(addDays(new Date(), -i));
   const dset = new Set(days.map(dkey));
@@ -955,7 +1082,15 @@ function weekSummary(){
       for (const id in m){ const p = realPatterns().find(x => x.id === id); if (p && m[id] && m[id].trim()) slips.push(`  – ${fmtShort(d)} (${p.name}): ${m[id].trim()}`); } });
     if (slips.length) L.push('', 'Where I slipped, and what came just before:', ...slips);
     const q = state.quest; if (q.start && !q.complete) L.push('', `Seven Days Out trial: ${TRIAL.filter((t,i)=>q.done[i]).length} of 7 quests sealed.`);
-    if (state.year){ const n = yearWeek(), w = state.year.weeks[n] || {}; L.push('', `Sovereign Year: ${state.year.goal}. Week ${n} of 52 (${yearDone()} steps done).`, `  This week\u2019s step: ${w.step || 'not set yet'}${w.done==='yes' ? ' (done)' : ''}`); }
+    if (state.goals.length){
+      const keep = state.goalIdx; L.push('', state.goals.length > 1 ? 'My Sovereign Year goals:' : 'My Sovereign Year:');
+      state.goals.forEach((g, i) => { state.goalIdx = i; const n = yearWeek(), w = g.weeks[n] || {};
+        L.push(`\u2022 ${g.goal}: week ${n} of 52, ${yearDone()} steps done.`, `  This week\u2019s step: ${w.step || 'not set yet'}${w.done==='yes' ? ' (done)' : ''}`);
+        if (g.measure){ const m = measureNow(g); L.push(`  Now at ${fmtNum(m.cur, g.measure.unit)} of ${fmtNum(g.measure.target, g.measure.unit)} (${Math.round(m.frac * 100)}%).`); } });
+      state.goalIdx = keep;
+    }
+    const hs = activeHabits();
+    if (hs.length){ L.push('', 'Habits I\u2019m building:'); hs.forEach(h => { const c = days.filter(d => state.habitChecks[dkey(d)] && state.habitChecks[dkey(d)][h.id]).length; L.push(`\u2022 ${h.name}: ${c} of 7 days.`); }); }
     L.push(`Rank: ${RANKS[rankOf(manna())].n} (${manna()} manna).`);
   }
   if ((state.witness.next||'').trim()) L.push('', `Next week I commit to: ${state.witness.next.trim()}`);
@@ -1097,8 +1232,18 @@ function journalText(){
     if (p.released) L.push('Released on ' + p.releasedAt);
     L.push('');
   });
-  if (state.year){ const y = state.year; L.push('==== Sovereign Year ====', `Goal: ${y.goal}`, `I am someone who ${y.identity}`, `Began ${y.start} \u00b7 week ${yearWeek()} of 52`); if (y.why) L.push('Why: ' + y.why); y.seasons.forEach((m, i) => { if (m) L.push(`${SEASONS[i].name}: ${m}${(y.milestones||{})[i] ? ' (reached ' + y.milestones[i] + ')' : ''}`); }); if (y.letter) L.push('Letter from my future self: ' + y.letter);
-    Object.keys(y.weeks).map(Number).sort((a,b)=>a-b).forEach(i => { const w = y.weeks[i]; L.push(`Week ${i}: ${w.step||'-'}${w.done?' ['+w.done+']':''}`); if (w.review){ if (w.review.helped) L.push('  Helped: ' + w.review.helped); if (w.review.blocked) L.push('  In the way: ' + w.review.blocked); } }); L.push(''); }
+  { const keep = state.goalIdx;
+    state.goals.forEach((y, gi) => { state.goalIdx = gi;
+      L.push(`==== Sovereign Year${state.goals.length > 1 ? ' goal ' + (gi + 1) : ''} ====`, `Goal: ${y.goal}`, `I am someone who ${y.identity}`, `Began ${y.start} \u00b7 week ${yearWeek()} of 52`);
+      if (y.measure) L.push(`Measured by: ${fmtNum(y.measure.start, y.measure.unit)} \u2192 ${fmtNum(y.measure.target, y.measure.unit)}`);
+      if (y.why) L.push('Why: ' + y.why);
+      y.seasons.forEach((m, i) => { if (m) L.push(`${SEASONS[i].name}: ${m}${(y.milestones||{})[i] ? ' (reached ' + y.milestones[i] + ')' : ''}`); });
+      if (y.letter) L.push('Letter from my future self: ' + y.letter);
+      Object.keys(y.weeks).map(Number).sort((a,b)=>a-b).forEach(i => { const w = y.weeks[i]; L.push(`Week ${i}: ${w.step||'-'}${w.done?' ['+w.done+']':''}${typeof w.value === 'number' ? ' \u00b7 figure ' + fmtNum(w.value, y.measure ? y.measure.unit : '') : ''}`); if (w.review){ if (w.review.helped) L.push('  Helped: ' + w.review.helped); if (w.review.blocked) L.push('  In the way: ' + w.review.blocked); } });
+      L.push(''); });
+    state.goalIdx = keep;
+    if (state.habits.length){ L.push('==== Habits ===='); state.habits.forEach(h => L.push(`${h.name}${h.cue ? ' (after I ' + h.cue + ')' : ''}: ${habitTotal(h.id)} days done${h.archived ? ', removed' : ''}`)); L.push(''); }
+  }
   const keys = new Set([...Object.keys(state.examens), ...Object.keys(state.slips), ...Object.keys(state.intentions), ...state.urges.map(u=>u.date)]);
   [...keys].sort().forEach(k => {
     const part = [];
@@ -1187,42 +1332,45 @@ const acts = {
   useTruth(b){ const p = realPatterns().find(x => x.id === b.dataset.id); if (p && p.mirror){ p.truth = p.mirror.truth; save(); render(); toast('Truth updated'); } },
   release(b){ const p = realPatterns().find(x => x.id === b.dataset.id); if (!p) return;
     p.released = true; p.releasedAt = todayKey(); save(); render(); showRelease(p); },
-  yStart(){ ydraft = blankYear(); const ids = realPatterns().map(p => (p.identity||'').trim()).filter(Boolean); if (ids.length) ydraft.identity = ids[0]; ystep = 0; yErr = ''; if (view() === 'yearsetup') render(); },
+  yStart(){ if (state.goals.length >= MAX_GOALS){ toast(`You can work on up to ${MAX_GOALS} goals at once.`); location.hash = 'future'; return; } yEditing = false; ydraft = blankYear(); const ids = realPatterns().map(p => (p.identity||'').trim()).filter(Boolean); if (ids.length) ydraft.identity = ids[0]; ystep = 0; yErr = ''; if (view() === 'yearsetup') render(); },
   yPickId(b){ ydraft.identity = b.dataset.v; const i = $('#y-identity'); if (i) i.value = ydraft.identity; },
   yPickPattern(b){ ydraft.fromPattern = ydraft.fromPattern === b.dataset.v ? '' : b.dataset.v; render(); },
   yNext(){
     yErr = '';
     if (ystep === 0 && !ydraft.identity.trim()){ yErr = 'Finish the sentence: I am someone who…'; render(); return; }
     if (ystep === 1 && !ydraft.goal.trim()){ yErr = 'Name your one goal for the year.'; render(); return; }
+    if (ystep === 2 && ydraft.mType === 'number'){ const a = num(ydraft.mStart), b = num(ydraft.mTarget); if (a === null || b === null){ yErr = 'Enter both numbers: where you are now and where you\u2019re heading.'; render(); return; } if (a === b){ yErr = 'Your target needs to be different from where you are now.'; render(); return; } }
     ystep = Math.min(YSTEPS.length - 1, ystep + 1); render(); window.scrollTo({top:0});
   },
   yBack(){ yErr = ''; ystep = Math.max(0, ystep - 1); render(); },
   yCancel(){ ydraft = null; location.hash = 'future'; },
   ySave(){
     const d = ydraft; yErr = '';
-    if (!state.year && !d.firstStep.trim()){ yErr = 'Name one small step for this week.'; render(); return; }
-    if (state.year){
-      Object.assign(state.year, {identity:d.identity.trim(), goal:d.goal.trim(), why:d.why.trim(), fromPattern:d.fromPattern, seasons:d.seasons.map(s => s.trim()), letter:d.letter.trim()});
+    if (!yEditing && !d.firstStep.trim()){ yErr = 'Name one small step for this week.'; render(); return; }
+    if (yEditing && G()){
+      Object.assign(G(), {identity:d.identity.trim(), goal:d.goal.trim(), why:d.why.trim(), fromPattern:d.fromPattern, seasons:d.seasons.map(s => s.trim()), letter:d.letter.trim(), measure:measureFrom(d)});
       if (d.firstStep.trim()) weekRec(yearWeek()).step = d.firstStep.trim();
-      toast('Your year is updated');
+      toast('Your goal is updated');
     } else {
-      state.year = {identity:d.identity.trim(), goal:d.goal.trim(), why:d.why.trim(), fromPattern:d.fromPattern, seasons:d.seasons.map(s => s.trim()), letter:d.letter.trim(), start:todayKey(), weeks:{1:{step:d.firstStep.trim()}}, milestones:{}};
-      queueSeal({kicker:'Week 1 of 52', name:'Your Sovereign Year', line:'The ground is cleared. Now you build, one small step a week.', emb:'sunrise'});
+      state.goals.push({id:newId(), identity:d.identity.trim(), goal:d.goal.trim(), why:d.why.trim(), fromPattern:d.fromPattern, seasons:d.seasons.map(s => s.trim()), letter:d.letter.trim(), start:todayKey(), weeks:{1:{step:d.firstStep.trim()}}, milestones:{}, measure:measureFrom(d)});
+      state.goalIdx = state.goals.length - 1;
+      queueSeal({kicker:'Week 1 of 52', name: state.goals.length > 1 ? d.goal.trim() : 'Your Sovereign Year', line:'The ground is cleared. Now you build, one small step a week.', emb:'sunrise'});
     }
-    save(); ydraft = null; yr = {}; location.hash = 'future';
+    save(); ydraft = null; yr = {}; yEditing = false; location.hash = 'future';
   },
-  yEdit(){ const y = state.year; ydraft = {identity:y.identity, goal:y.goal, why:y.why, fromPattern:y.fromPattern||'', seasons:[...y.seasons], letter:y.letter, firstStep:''}; ystep = 0; yErr = ''; location.hash = 'yearsetup'; },
+  yEdit(){ const y = G(); yEditing = true; const m = y.measure; ydraft = {identity:y.identity, goal:y.goal, why:y.why, fromPattern:y.fromPattern||'', seasons:[...y.seasons], letter:y.letter, firstStep:'', mType: m ? 'number' : 'steps', mUnit: m ? m.unit : '', mStart: m ? String(m.start) : '', mTarget: m ? String(m.target) : ''}; ystep = 0; yErr = ''; location.hash = 'yearsetup'; },
   ySetStep(){ const s = stepNow.trim(); if (!s){ toast('Write one small step first.'); return; } weekRec(yearWeek()).step = s; stepNow = ''; save(); render(); },
   yStepDone(){ weekRec(yearWeek()).done = 'yes'; save(); render(); toast('Step done. +10 manna'); },
   yStepUndo(){ delete weekRec(yearWeek()).done; save(); render(); },
   yHow(b){ yr.how = b.dataset.v; render(); },
   yPid(b){ yr.pid = yr.pid === b.dataset.v ? '' : b.dataset.v; render(); },
-  yReviewOpen(){ reviewOpen = true; const n = yearWeek(); yr = Object.assign({week:n}, clone(weekRec(n).review || {}), {next:(state.year.weeks[n+1]||{}).step || ''}); render(); },
+  yReviewOpen(){ reviewOpen = true; const n = yearWeek(); yr = Object.assign({week:n}, clone(weekRec(n).review || {}), {next:(G().weeks[n+1]||{}).step || ''}); render(); },
   yReviewSave(){
     const n = yearWeek(); yErr = '';
     if (!yr.how){ yErr = 'Choose how this week’s step went.'; render(); return; }
     if (n < 52 && !(yr.next||'').trim()){ yErr = 'Name next week’s step before closing the week.'; render(); return; }
     const w = weekRec(n);
+    if (G().measure && num(yr.value) !== null) w.value = num(yr.value);
     w.review = {how:yr.how, helped:(yr.helped||'').trim(), blocked:(yr.blocked||'').trim(), pid:yr.pid && yr.pid !== 'none' ? yr.pid : '', at:todayKey()};
     w.done = yr.how;
     if (n < 52){ const nx = weekRec(n + 1); nx.step = yr.next.trim(); }
@@ -1232,7 +1380,7 @@ const acts = {
   },
   async yMirror(){
     if (!mirrorOn()) return;
-    const y = state.year, n = yearWeek(), si = Math.max(0, seasonOf(n));
+    const y = G(), n = yearWeek(), si = Math.max(0, seasonOf(n));
     yearBusy = true; yearMirrorErr = ''; render();
     const recent = [];
     for (let i = Math.max(1, n - 3); i <= n; i++){ const w = y.weeks[i]; if (!w) continue; recent.push(`Week ${i}: step "${w.step||'-'}", ${w.done||yr.how||'not reviewed'}${w.review&&w.review.blocked?`, blocked by: ${w.review.blocked}`:''}${i===n&&yr.blocked?`, blocked by: ${yr.blocked}`:''}`); }
@@ -1242,13 +1390,13 @@ const acts = {
     } catch(e){ yearMirrorErr = errText(e, 'The Mirror couldn’t answer just now. Try again.'); }
     yearBusy = false; render();
   },
-  yMilestone(b){ const y = state.year; y.milestones = y.milestones || {}; const i = +b.dataset.i; y.milestones[i] = todayKey(); save(); render();
+  yMilestone(b){ const y = G(); y.milestones = y.milestones || {}; const i = +b.dataset.i; y.milestones[i] = todayKey(); save(); render();
     queueSeal({kicker:`${SEASONS[i].name} milestone`, name:y.seasons[i], line:'A season’s harvest, gathered. +20 manna', emb:SEASONS[i].emb}); },
   yEndArm(){ yearEndArmed = true; render(); },
   yEndNo(){ yearEndArmed = false; render(); },
-  yEnd(){ state.year = null; yearEndArmed = false; save(); render(); toast('Your year has been cleared.'); },
-  yNewYear(){ state.yearsCompleted = (state.yearsCompleted || 0) + 1; state.year = null; save(); location.hash = 'future'; },
-  buildOnThis(){ $('#release').hidden = true; location.hash = state.year ? 'future' : 'yearsetup'; if (!state.year) acts.yStart(); },
+  yEnd(){ state.goals.splice(state.goalIdx, 1); state.goalIdx = 0; yr = {}; yearEndArmed = false; save(); render(); toast('That goal has been cleared.'); },
+  yNewYear(){ state.yearsCompleted = (state.yearsCompleted || 0) + 1; state.goals.splice(state.goalIdx, 1); state.goalIdx = 0; yr = {}; save(); location.hash = 'future'; },
+  buildOnThis(){ $('#release').hidden = true; if (state.goals.length < MAX_GOALS){ acts.yStart(); location.hash = 'yearsetup'; } else location.hash = 'future'; },
   async checkout(b){
     plusBusy = b.dataset.plan; plusErr = ''; render();
     try { const url = await api.checkout(b.dataset.plan); await flush(); window.location.href = url; }
@@ -1260,6 +1408,33 @@ const acts = {
     catch(e){ plusBusy = ''; plusErr = errText(e, 'We couldn’t open your plan page. Try again in a moment.'); render(); }
   },
   ownerRefresh(){ adminStats = null; adminErr = ''; render(); },
+  yPick(b){ state.goalIdx = +b.dataset.i; yr = {}; figureDraft = ''; reviewOpen = false; yearMirror = null; blockedPrompt = null; yearEndArmed = false; save(); render(); },
+  yMType(b){ ydraft.mType = b.dataset.v; render(); },
+  yFigure(){
+    const v = num(figureDraft);
+    if (v === null){ toast('Enter a number, e.g. 2500'); return; }
+    weekRec(yearWeek()).value = v; figureDraft = ''; save(); render(); toast('Figure saved');
+  },
+  hFormOpen(){ habitFormOpen = true; habitDraft = {name:'', cue:''}; render(); const i = $('#h-name'); if (i) i.focus(); },
+  hFormClose(){ habitFormOpen = false; render(); },
+  hAdd(){
+    const name = habitDraft.name.trim();
+    if (!name){ toast('Name the habit first.'); return; }
+    if (activeHabits().length >= habitLimit()){ habitFormOpen = false; render(); return; }
+    state.habits.push({id:newId(), name:name.slice(0, 80), cue:habitDraft.cue.trim().replace(/^after i\s*/i, '').slice(0, 80), created:todayKey(), archived:false});
+    habitFormOpen = false; save(); render(); toast('Habit added. Tick it off each day you do it.');
+  },
+  hTick(b){
+    const k = todayKey(), id = b.dataset.id;
+    const m = state.habitChecks[k] || (state.habitChecks[k] = {});
+    if (m[id]) delete m[id]; else m[id] = 1;
+    if (!Object.keys(m).length) delete state.habitChecks[k];
+    save(); render();
+    if (m[id]){ const st = habitStreak(id); if ([7, 21, 40, 66].includes(st)) queueSeal({kicker:`${st} days in a row`, name:(state.habits.find(h => h.id === id)||{}).name || 'Your habit', line: st === 66 ? 'Sixty-six days. Research suggests this is about when a habit becomes automatic.' : 'Every tick is a vote for who you are becoming.', emb:'sprout'}); }
+  },
+  hRemoveArm(b){ habitDelArmed = b.dataset.id; render(); },
+  hRemoveNo(){ habitDelArmed = null; render(); },
+  hRemove(b){ const h = state.habits.find(x => x.id === b.dataset.id); if (h) h.archived = true; habitDelArmed = null; save(); render(); toast('Habit removed. Its history is kept in your journal.'); },
   closeRelease(){ $('#release').hidden = true; },
   closeSeal(){ nextSeal(); },
   delAsk(b){ confirmDel = b.dataset.id; render(); },
@@ -1330,13 +1505,17 @@ document.addEventListener('input', e => {
   else if (bind === 'yseason'){ ydraft.seasons[+t.dataset.i] = t.value; }
   else if (bind === 'yr'){ yr[t.dataset.k] = t.value; }
   else if (bind === 'ystepnow'){ stepNow = t.value; }
+  else if (bind === 'yfig'){ figureDraft = t.value; }
+  else if (bind === 'habit'){ habitDraft[t.dataset.k] = t.value; }
   else if (bind === 'remConsent'){ remConsent = t.checked; }
   else if (bind === 'urgeRange'){ urge.intensity = +t.value; const o = $('#u-int'); if (o) o.textContent = t.value; }
   else if (bind === 'wName' || bind === 'wNext' || bind === 'wStake'){ state.witness[{wName:'name',wNext:'next',wStake:'stake'}[bind]] = t.value; save(); const s = $('#summary'); if (s) s.textContent = weekSummary(); }
 });
 /* Examen completes a quest on blur, so the page doesn't redraw while typing */
 document.addEventListener('focusout', e => { if (e.target.dataset && e.target.dataset.bind === 'examen' && view() === 'today'){ if (syncQuest()) checkRank(); else checkRank(); } });
-document.addEventListener('keydown', e => { if (e.key === 'Escape'){ if (!$('#release').hidden) $('#release').hidden = true; if (!$('#urge').hidden) acts.urgeClose(); if (!$('#seal').hidden) nextSeal(); } });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target && e.target.dataset && e.target.dataset.bind === 'habit'){ e.preventDefault(); acts.hAdd(); return; }
+  if (e.key === 'Enter' && e.target && e.target.id === 'y-fig'){ e.preventDefault(); acts.yFigure(); return; } if (e.key === 'Escape'){ if (!$('#release').hidden) $('#release').hidden = true; if (!$('#urge').hidden) acts.urgeClose(); if (!$('#seal').hidden) nextSeal(); } });
 window.addEventListener('hashchange', () => { confirmDel = null; render(); window.scrollTo({top:0}); });
 
 setStatus();

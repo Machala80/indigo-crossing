@@ -16,14 +16,18 @@ export const stats = query({
     const mirror = await ctx.db.query("mirrorUsage").collect();
     const since = (ms: number) => new Date(now - ms).toISOString().slice(0, 10);
     const d7 = since(7 * day), d30 = since(30 * day);
-    let checkins7 = 0, years = 0, patterns = 0, released = 0, activeCheckers = 0;
+    let checkins7 = 0, years = 0, goals = 0, numberGoals = 0, habits = 0, habitTicks7 = 0, patterns = 0, released = 0, activeCheckers = 0;
     for (const j of journals) {
       try {
         const s = JSON.parse(j.data);
         let mine = 0;
         for (const k in s.checks || {}) if (k >= d7) mine += Object.keys(s.checks[k]).length;
         checkins7 += mine; if (mine) activeCheckers++;
-        if (s.year) years++;
+        const gs = Array.isArray(s.goals) && s.goals.length ? s.goals : s.year ? [s.year] : [];
+        if (gs.length) years++;
+        goals += gs.length; numberGoals += gs.filter((g: any) => g && g.measure).length;
+        habits += (Array.isArray(s.habits) ? s.habits.filter((h: any) => h && !h.archived).length : 0);
+        for (const k in s.habitChecks || {}) if (k >= d7) habitTicks7 += Object.keys(s.habitChecks[k]).length;
         for (const p of s.patterns || []) { patterns++; if (p.released) released++; }
       } catch { /* skip unreadable */ }
     }
@@ -34,7 +38,7 @@ export const stats = query({
       active7: journals.filter((j) => j.updatedAt >= now - 7 * day).length,
       checkingIn7: activeCheckers,
       checkins7,
-      patterns, released, years,
+      patterns, released, years, goals, numberGoals, habits, habitTicks7,
       remindersMorning: reminders.filter((r) => r.on && r.slot === "morning").length,
       remindersEvening: reminders.filter((r) => r.on && r.slot === "evening").length,
       plusActive: subs.filter((s) => ["active", "trialing", "past_due"].includes(s.status)).length,

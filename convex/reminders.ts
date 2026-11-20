@@ -137,7 +137,7 @@ export const unsubscribe = httpAction(async (ctx, req) => {
 export const sundayDue = internalQuery({
   args: { dateKey: v.string() },
   handler: async (ctx, { dateKey }) => {
-    const out: { id: any; email: string; token: string; week: number; goal: string }[] = [];
+    const out: { id: any; email: string; token: string; week: number; goal: string; more: number }[] = [];
     for (const slot of ["morning", "evening"] as const) {
       const rows = await ctx.db.query("reminders").withIndex("by_slot_on", (q) => q.eq("slot", slot).eq("on", true)).collect();
       for (const r of rows) {
@@ -145,13 +145,16 @@ export const sundayDue = internalQuery({
         const j = await ctx.db.query("journals").withIndex("by_user", (q) => q.eq("userId", r.userId)).unique();
         if (!j) continue;
         try {
-          const y = JSON.parse(j.data).year;
-          if (!y || !y.start || !y.goal) continue;
+          const js = JSON.parse(j.data);
+          // Newer journals keep a list of goals; older ones a single "year".
+          const goals = (Array.isArray(js.goals) && js.goals.length ? js.goals : js.year ? [js.year] : []).filter((g: any) => g && g.start && g.goal);
+          const y = goals[0];
+          if (!y) continue;
           const [yy, mm, dd] = String(y.start).split("-").map(Number);
           const [ty, tm, td] = dateKey.split("-").map(Number);
           const days = Math.floor((Date.UTC(ty, tm - 1, td) - Date.UTC(yy, mm - 1, dd)) / 86400000);
           const week = Math.min(52, Math.max(1, Math.floor(days / 7) + 1));
-          out.push({ id: r._id, email: r.email, token: r.token, week, goal: String(y.goal).slice(0, 120) });
+          out.push({ id: r._id, email: r.email, token: r.token, week, goal: String(y.goal).slice(0, 120), more: goals.length - 1 });
         } catch { /* skip */ }
       }
     }
@@ -181,7 +184,9 @@ export const sunday = internalAction({
       const subject = `Close week ${r.week} of your Sovereign Year`;
       const lines = [
         `It’s Sunday evening. Week ${r.week} of 52 is closing.`,
-        `Take five minutes: how did this week’s step go, what helped, what got in the way? Then set next week’s step towards “${r.goal}”.`,
+        r.more
+          ? `Take five minutes for each of your ${r.more + 1} goals: how did this week’s step go, what helped, what got in the way? Then set next week’s steps, starting with “${r.goal}”.`
+          : `Take five minutes: how did this week’s step go, what helped, what got in the way? Then set next week’s step towards “${r.goal}”.`,
         "One honest review a week is how a year gets built.",
       ];
       try {
